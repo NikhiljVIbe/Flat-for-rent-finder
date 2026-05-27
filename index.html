@@ -1,0 +1,2026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Noida Apartment Map — Leverage Edu, Sector 126</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<style>
+  :root {
+    --bg: #f7f6f3;
+    --surface: rgba(255, 255, 255, 0.78);
+    --surface-solid: #ffffff;
+    --border: rgba(15, 23, 42, 0.08);
+    --border-strong: rgba(15, 23, 42, 0.14);
+    --ink: #0f172a;
+    --ink-soft: #475569;
+    --ink-muted: #94a3b8;
+    --brand: #6366f1;
+    --brand-deep: #4f46e5;
+    --brand-soft: #eef2ff;
+    --mid: #10b981;
+    --mid-soft: #ecfdf5;
+    --premium: #3b82f6;
+    --premium-soft: #eff6ff;
+    --ultra: #f59e0b;
+    --ultra-soft: #fffbeb;
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.06);
+    --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+    --shadow-brand: 0 8px 30px -8px rgba(99, 102, 241, 0.35);
+    --radius: 14px;
+    --radius-sm: 10px;
+    --radius-lg: 20px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  /* Background decorative blob */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; left: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -300px; right: -200px;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #app {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== Sidebar ===== */
+  #sidebar {
+    background: var(--surface);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 24px 20px;
+    position: relative;
+    z-index: 2;
+  }
+  #sidebar::-webkit-scrollbar { width: 6px; }
+  #sidebar::-webkit-scrollbar-track { background: transparent; }
+  #sidebar::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+  #sidebar::-webkit-scrollbar-thumb:hover { background: var(--ink-muted); }
+
+  /* Header */
+  .header { margin-bottom: 20px; }
+  .header-eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--brand-deep);
+    background: var(--brand-soft);
+    padding: 5px 10px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+  }
+  .header-eyebrow::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--brand);
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
+    50% { box-shadow: 0 0 0 6px rgba(99, 102, 241, 0); }
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 6px;
+    line-height: 1.2;
+  }
+  .header-sub {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+
+  /* Stat strip */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .stat {
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    box-shadow: var(--shadow-sm);
+  }
+  .stat-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+  }
+  .stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .stat-value small {
+    font-size: 11px;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 18px;
+  }
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+    padding: 5px 10px;
+    border-radius: 999px;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+  .dot.mid { background: var(--mid); }
+  .dot.premium { background: var(--premium); }
+  .dot.ultra { background: var(--ultra); }
+  .dot.office { background: var(--brand); border-radius: 2px; }
+
+  /* Controls */
+  .controls {
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .control-row { margin-bottom: 10px; }
+  .control-row:last-child { margin-bottom: 0; }
+  .control-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .pill-row {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .pill {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .pill:hover { border-color: var(--border-strong); color: var(--ink); }
+  .pill.active {
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+  }
+  select.sort-select {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-family: inherit;
+    font-weight: 500;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+  select.sort-select:focus { outline: 2px solid var(--brand-soft); outline-offset: 1px; border-color: var(--brand); }
+
+  /* List header */
+  .list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .list-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .list-count {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-muted);
+  }
+
+  /* Cards */
+  .society-card {
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .society-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: transparent;
+    transition: background 0.2s;
+  }
+  .society-card.band-mid::before { background: var(--mid); }
+  .society-card.band-premium::before { background: var(--premium); }
+  .society-card.band-ultra::before { background: var(--ultra); }
+  .society-card:hover {
+    transform: translateY(-1px);
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-md);
+  }
+  .society-card.active {
+    border-color: var(--brand);
+    box-shadow: var(--shadow-brand);
+    background: linear-gradient(180deg, #ffffff 0%, #fafaff 100%);
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .card-title {
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+  .card-sector {
+    font-size: 11px;
+    color: var(--ink-muted);
+    margin-top: 2px;
+    font-weight: 500;
+  }
+  .price-tag {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .price-tag.mid { background: var(--mid-soft); color: #047857; }
+  .price-tag.premium { background: var(--premium-soft); color: #1d4ed8; }
+  .price-tag.ultra { background: var(--ultra-soft); color: #b45309; }
+  .card-meta {
+    display: flex;
+    gap: 10px;
+    font-size: 11px;
+    color: var(--ink-soft);
+    align-items: center;
+  }
+  .card-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .card-meta b {
+    color: var(--ink);
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+  .card-meta-icon {
+    width: 12px; height: 12px;
+    opacity: 0.6;
+  }
+  .card-bhk {
+    font-size: 10px;
+    background: rgba(15, 23, 42, 0.04);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+    color: var(--ink-soft);
+  }
+
+  /* Map */
+  #map {
+    height: 100vh;
+    background: #e6e8eb;
+  }
+  .leaflet-control-attribution {
+    background: rgba(255,255,255,0.8) !important;
+    backdrop-filter: blur(6px);
+    border-radius: 6px !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 10px !important;
+  }
+  .leaflet-control-zoom {
+    border: none !important;
+    box-shadow: var(--shadow-md) !important;
+    border-radius: 10px !important;
+    overflow: hidden;
+  }
+  .leaflet-control-zoom a {
+    background: var(--surface-solid) !important;
+    color: var(--ink) !important;
+    font-weight: 500 !important;
+    border: none !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+  .leaflet-control-zoom a:last-child { border-bottom: none !important; }
+  .leaflet-control-zoom a:hover { background: var(--brand-soft) !important; color: var(--brand-deep) !important; }
+
+  /* Map markers */
+  .office-marker {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4), 0 0 0 4px rgba(255, 255, 255, 0.9);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Inter', sans-serif;
+    position: relative;
+  }
+  .office-marker::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #4f46e5;
+  }
+  .office-icon {
+    width: 14px; height: 14px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .society-marker {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(15, 23, 42, 0.08);
+    transition: transform 0.15s;
+    cursor: pointer;
+  }
+  .society-marker:hover { transform: scale(1.2); }
+  .society-marker.active {
+    transform: scale(1.35);
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.3), 0 0 0 4px rgba(255, 255, 255, 0.95);
+  }
+
+  /* Popup */
+  .leaflet-popup-content-wrapper {
+    border-radius: var(--radius) !important;
+    box-shadow: var(--shadow-lg) !important;
+    border: 1px solid var(--border);
+    padding: 4px !important;
+  }
+  .leaflet-popup-content {
+    margin: 14px 16px !important;
+    font-family: 'Inter', sans-serif;
+    max-height: 70vh !important;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .leaflet-popup-content::-webkit-scrollbar { width: 5px; }
+  .leaflet-popup-content::-webkit-scrollbar-track { background: transparent; }
+  .leaflet-popup-content::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.18); border-radius: 3px; }
+  .leaflet-popup-content::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,0.3); }
+  .leaflet-popup-tip { box-shadow: var(--shadow-md) !important; }
+
+  .popup-card { min-width: 240px; font-size: 12px; }
+  .popup-title {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    margin-bottom: 2px;
+  }
+  .popup-sector {
+    font-size: 11px;
+    color: var(--ink-muted);
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .popup-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 12px;
+  }
+  .popup-row + .popup-row { border-top: 1px dashed var(--border); }
+  .popup-row span:first-child {
+    color: var(--ink-muted);
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .popup-row span:last-child {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .popup-row .strong {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+  .popup-notes {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    color: var(--ink-soft);
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .popup-skeleton {
+    display: inline-block;
+    width: 60px; height: 12px;
+    background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
+    background-size: 200% 100%;
+    border-radius: 4px;
+    animation: skeleton 1.4s ease-in-out infinite;
+  }
+  @keyframes skeleton {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Popup hero image */
+  .popup-image-wrap {
+    margin: -14px -16px 10px;
+    height: 100px;
+    position: relative;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+  }
+  .popup-image-wrap.band-mid { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+  .popup-image-wrap.band-premium { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+  .popup-image-wrap.band-ultra { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+  .popup-image-wrap img.popup-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+  .popup-image-wrap img.popup-image.loaded { opacity: 1; }
+  .popup-image-wrap.has-image::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 100%);
+    z-index: 1;
+    pointer-events: none;
+  }
+  .popup-image-fallback {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 0;
+  }
+  .popup-image-letter {
+    font-size: 38px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: -0.05em;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .popup-image-icon {
+    position: absolute;
+    bottom: 12px; left: 14px;
+    color: rgba(255,255,255,0.7);
+    width: 22px; height: 22px;
+    z-index: 2;
+  }
+  .popup-image-photos {
+    position: absolute;
+    bottom: 10px; right: 10px;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink);
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(8px);
+    padding: 6px 11px;
+    border-radius: 8px;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: all 0.15s;
+  }
+  .popup-image-photos:hover {
+    background: #fff;
+    transform: translateY(-1px);
+    color: var(--brand-deep);
+  }
+  .popup-image-photos svg { width: 11px; height: 11px; }
+  .popup-image-status-overlay {
+    position: absolute;
+    top: 10px; left: 10px;
+    z-index: 3;
+  }
+
+  /* Card thumbnail */
+  .card-thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+  }
+  .card-thumb.band-mid { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+  .card-thumb.band-premium { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+  .card-thumb.band-ultra { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+  .card-thumb img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .card-thumb img.loaded { opacity: 1; }
+  .card-thumb-letter {
+    font-size: 22px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.95);
+    letter-spacing: -0.04em;
+    z-index: 0;
+  }
+  .card-body {
+    flex-grow: 1;
+    min-width: 0;
+  }
+
+  /* Google Maps layer control */
+  .leaflet-control-layers {
+    background: var(--surface-solid) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+    box-shadow: var(--shadow-md) !important;
+    padding: 6px 10px !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 12px !important;
+  }
+  .leaflet-control-layers-expanded label {
+    margin-bottom: 4px !important;
+    font-weight: 500;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .leaflet-control-layers-base label:hover { color: var(--brand-deep); }
+
+  /* Rating badge on card thumb */
+  .card-rating {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 3;
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 800;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25), 0 0 0 2px rgba(255,255,255,0.95);
+    letter-spacing: -0.04em;
+  }
+
+  /* Popup rating section */
+  .popup-rating {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: linear-gradient(135deg, #faf5ff 0%, #eef2ff 100%);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    border-radius: 10px;
+  }
+  .popup-rating-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .popup-rating-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: -0.04em;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    flex-shrink: 0;
+  }
+  .popup-rating-meta {
+    flex-grow: 1;
+  }
+  .popup-rating-label {
+    font-size: 10px;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .popup-rating-desc {
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    font-weight: 500;
+    line-height: 1.3;
+  }
+  .popup-rating-bars {
+    display: grid;
+    gap: 4px;
+  }
+  .popup-rating-bar {
+    display: grid;
+    grid-template-columns: 72px 1fr 20px;
+    gap: 8px;
+    align-items: center;
+    font-size: 10.5px;
+  }
+  .popup-rating-bar-label {
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+  .popup-rating-bar-track {
+    height: 5px;
+    background: rgba(15, 23, 42, 0.08);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .popup-rating-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+  }
+  .popup-rating-bar-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 11px;
+    text-align: right;
+  }
+
+  /* Status badge */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .status-badge.new {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+  }
+  .status-badge.upcoming {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+  }
+  .status-badge::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.9;
+  }
+
+  /* Primary CTA — opens listings page */
+  a.listings-cta,
+  a.listings-cta:link,
+  a.listings-cta:visited,
+  a.listings-cta:hover,
+  a.listings-cta:active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 12px;
+    padding: 11px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border-radius: 10px;
+    text-decoration: none !important;
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.32);
+    transition: transform 0.15s, box-shadow 0.15s;
+    letter-spacing: -0.01em;
+  }
+  a.listings-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(99, 102, 241, 0.42);
+  }
+  a.listings-cta svg {
+    width: 13px;
+    height: 13px;
+    stroke: #ffffff !important;
+    color: #ffffff !important;
+  }
+  .listings-cta-sub {
+    font-size: 10.5px;
+    color: var(--ink-muted);
+    text-align: center;
+    margin-top: 8px;
+    font-weight: 500;
+  }
+  .listings-cta-sub b { color: var(--ink-soft); font-weight: 600; }
+
+  /* Card listings link */
+  .card-listings-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--brand-deep);
+    text-decoration: none;
+    margin-left: auto;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--brand-soft);
+    transition: all 0.15s;
+  }
+  .card-listings-link:hover {
+    background: var(--brand);
+    color: #fff;
+  }
+  .card-listings-link svg { width: 9px; height: 9px; }
+
+  /* Footer */
+  .footer {
+    font-size: 10.5px;
+    color: var(--ink-muted);
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    line-height: 1.6;
+  }
+  .footer a { color: var(--brand-deep); text-decoration: none; font-weight: 500; }
+  .footer a:hover { text-decoration: underline; }
+
+  /* Floating action: reset view */
+  .reset-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 500;
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+  }
+  .reset-btn:hover { background: var(--brand-soft); color: var(--brand-deep); border-color: var(--brand); }
+
+  /* ============ Responsive ============ */
+
+  /* Tablet (≤960px): stack map + sidebar */
+  @media (max-width: 960px) {
+    #app {
+      grid-template-columns: 1fr;
+      grid-template-rows: 55vh 45vh;
+    }
+    #map { height: 55vh; }
+    #sidebar {
+      border-right: none;
+      border-top: 1px solid var(--border);
+      padding: 16px;
+      height: 45vh;
+    }
+    .header { margin-bottom: 14px; }
+    h1 { font-size: 19px; }
+    .header-sub { font-size: 12px; }
+    .stats { gap: 6px; margin-bottom: 14px; }
+    .stat { padding: 8px 10px; }
+    .stat-value { font-size: 14px; }
+    .controls { padding: 11px; margin-bottom: 12px; }
+    .society-card { padding: 12px; gap: 11px; }
+    .card-thumb { width: 52px; height: 52px; }
+  }
+
+  /* Phone (≤640px): tighten everything */
+  @media (max-width: 640px) {
+    body::before, body::after { display: none; }
+    #app { grid-template-rows: 52vh 48vh; }
+    #map { height: 52vh; }
+    #sidebar { padding: 12px; height: 48vh; }
+    .header { margin-bottom: 10px; }
+    h1 { font-size: 17px; line-height: 1.2; }
+    .header-sub { font-size: 11.5px; }
+    .header-eyebrow { font-size: 10px; padding: 4px 9px; margin-bottom: 8px; }
+    .stats { gap: 5px; margin-bottom: 10px; }
+    .stat { padding: 7px 9px; }
+    .stat-label { font-size: 9px; }
+    .stat-value { font-size: 13px; }
+    .legend { gap: 4px; margin-bottom: 10px; }
+    .legend-item { font-size: 10px; padding: 4px 8px; }
+    .controls { padding: 10px; margin-bottom: 12px; }
+    .control-row { margin-bottom: 8px; }
+    .control-label { font-size: 9.5px; margin-bottom: 5px; }
+    .pill-row { gap: 3px; }
+    .pill { font-size: 10.5px; padding: 4px 9px; }
+    select.sort-select { font-size: 11.5px; padding: 7px 11px; }
+    .list-header { margin-bottom: 8px; }
+    .list-title { font-size: 12px; }
+    .list-count { font-size: 10px; }
+    .society-card { padding: 10px; gap: 10px; margin-bottom: 8px; }
+    .card-thumb { width: 48px; height: 48px; border-radius: 9px; }
+    .card-thumb-letter { font-size: 18px; }
+    .card-rating { width: 20px; height: 20px; font-size: 9px; top: 3px; right: 3px; }
+    .card-title { font-size: 13px; }
+    .card-sector { font-size: 10px; }
+    .price-tag { font-size: 9.5px; padding: 2px 6px; }
+    .card-meta { font-size: 10px; gap: 7px; flex-wrap: wrap; }
+    .card-meta b { font-size: 10px; }
+    .card-bhk { font-size: 9px; padding: 2px 5px; }
+    .card-listings-link { font-size: 10px; padding: 2px 6px; }
+    .footer { font-size: 9.5px; }
+
+    /* Map controls — smaller on mobile */
+    .leaflet-control-layers { font-size: 11px !important; padding: 4px 8px !important; }
+    .leaflet-control-layers-expanded label { margin-bottom: 3px !important; font-size: 11px !important; }
+    .reset-btn { font-size: 11px; padding: 6px 10px; top: 8px; right: 8px; gap: 4px; }
+    .reset-btn svg { width: 10px; height: 10px; }
+    .leaflet-control-zoom a { width: 28px !important; height: 28px !important; line-height: 28px !important; font-size: 16px !important; }
+
+    /* Office marker */
+    .office-marker { font-size: 11px; padding: 6px 11px; }
+    .office-icon { width: 12px; height: 12px; }
+    .society-marker { width: 18px; height: 18px; border-width: 2.5px; }
+    .society-marker.active { transform: scale(1.3); }
+
+    /* Popup adjusts on mobile */
+    .leaflet-popup-content {
+      margin: 12px 14px !important;
+      max-height: 60vh !important;
+    }
+    .popup-card { min-width: 200px; font-size: 11.5px; }
+    .popup-image-wrap { height: 85px; margin: -12px -14px 10px; }
+    .popup-image-letter { font-size: 30px; }
+    .popup-title { font-size: 13.5px; }
+    .popup-sector { font-size: 10.5px; }
+    .popup-row { font-size: 11px; padding: 5px 0; }
+    .popup-notes { font-size: 10.5px; }
+    .popup-rating { padding: 9px 11px; }
+    .popup-rating-circle { width: 36px; height: 36px; font-size: 14px; }
+    .popup-rating-label { font-size: 9px; }
+    .popup-rating-desc { font-size: 11px; }
+    .popup-rating-bar { font-size: 10px; grid-template-columns: 66px 1fr 18px; }
+    a.listings-cta, a.listings-cta:link { font-size: 12px; padding: 10px 12px; }
+    .listings-cta-sub { font-size: 9.5px; }
+  }
+
+  /* Very small phone (≤380px) */
+  @media (max-width: 380px) {
+    .stats { grid-template-columns: 1fr 1fr; }
+    .stats .stat:nth-child(3) { grid-column: 1 / -1; }
+    .pill { font-size: 10px; padding: 3px 8px; }
+    .header-eyebrow { font-size: 9.5px; }
+    h1 { font-size: 16px; }
+  }
+
+  /* Landscape phone — keep sidebar narrow on the right */
+  @media (max-width: 900px) and (orientation: landscape) and (min-height: 380px) {
+    #app {
+      grid-template-columns: 1fr 320px;
+      grid-template-rows: 100vh;
+    }
+    #map { height: 100vh; }
+    #sidebar {
+      height: 100vh;
+      border-top: none;
+      border-left: 1px solid var(--border);
+    }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="header">
+      <span class="header-eyebrow">Live · Noida</span>
+      <h1>Find your next home</h1>
+      <div class="header-sub">Premium societies near <b style="color:var(--ink)">Leverage Edu, Sector 126</b>. Click any pin or card for a live driving route.</div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">Societies</div>
+        <div class="stat-value" id="statCount">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Closest</div>
+        <div class="stat-value" id="statClosest">— <small>km</small></div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Price range</div>
+        <div class="stat-value" id="statRange" style="font-size:14px;">—</div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="legend-item"><span class="dot office"></span> Office</span>
+      <span class="legend-item"><span class="dot mid"></span> ₹25–45k</span>
+      <span class="legend-item"><span class="dot premium"></span> ₹45–80k</span>
+      <span class="legend-item"><span class="dot ultra"></span> ₹80k+</span>
+    </div>
+
+    <div class="controls">
+      <div class="control-row">
+        <label class="control-label">Price band</label>
+        <div class="pill-row" id="bandPills">
+          <button class="pill active" data-band="all">All</button>
+          <button class="pill" data-band="mid">Mid</button>
+          <button class="pill" data-band="premium">Premium</button>
+          <button class="pill" data-band="ultra">Ultra</button>
+        </div>
+      </div>
+      <div class="control-row">
+        <label class="control-label">Area</label>
+        <div class="pill-row" id="areaPills">
+          <button class="pill active" data-area="all">All</button>
+          <button class="pill" data-area="sec128">Sec 128</button>
+          <button class="pill" data-area="sec7x">Sec 75–78</button>
+          <button class="pill" data-area="expressway">Expressway</button>
+          <button class="pill" data-area="central">Central</button>
+        </div>
+      </div>
+      <div class="control-row">
+        <label class="control-label">Status</label>
+        <div class="pill-row" id="statusPills">
+          <button class="pill active" data-status="all">All</button>
+          <button class="pill" data-status="ready">Ready</button>
+          <button class="pill" data-status="new">New</button>
+          <button class="pill" data-status="upcoming">Upcoming</button>
+        </div>
+      </div>
+      <div class="control-row">
+        <label class="control-label">Min rating</label>
+        <div class="pill-row" id="ratingPills">
+          <button class="pill active" data-rating="0">All</button>
+          <button class="pill" data-rating="6.5">6.5+</button>
+          <button class="pill" data-rating="7.5">7.5+</button>
+          <button class="pill" data-rating="8">8+</button>
+          <button class="pill" data-rating="8.5">8.5+ Top</button>
+        </div>
+      </div>
+      <div class="control-row">
+        <label class="control-label">Sort by</label>
+        <select class="sort-select" id="sortBy">
+          <option value="rating">Highest rated</option>
+          <option value="distance">Distance from office</option>
+          <option value="price">Price (low → high)</option>
+          <option value="priceDesc">Price (high → low)</option>
+          <option value="name">Name (A–Z)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="list-header">
+      <div class="list-title">Societies</div>
+      <div class="list-count" id="listCount">—</div>
+    </div>
+    <div id="list"></div>
+
+    <div class="footer">
+      Drive times via OSRM routing; straight-line fallback if unavailable. Rent ranges are 2025–26 indicative — verify on
+      <a href="https://www.magicbricks.com" target="_blank">MagicBricks</a> ·
+      <a href="https://www.99acres.com" target="_blank">99acres</a> ·
+      <a href="https://housing.com" target="_blank">Housing.com</a>
+    </div>
+  </aside>
+  <div id="map">
+    <button class="reset-btn" id="resetBtn" title="Reset map view">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      Reset view
+    </button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+// =============== DATA ===============
+const OFFICE = {
+  name: "Leverage Edu",
+  address: "3rd Floor, Plot 1/C, Raipur Khadar, Sector 126, Noida 201313",
+  lat: 28.5409, lng: 77.3886
+};
+
+const SOCIETIES = [
+  { name: "Jaypee Greens Wish Town – Pavilion Court", sector: "Sector 128", area: "sec128",
+    lat: 28.5288, lng: 77.4038, band: "ultra", rent: "₹70k–1.5L", bhk: "3/4 BHK",
+    notes: "Marquee Jaypee development. Golf course, large green campus. Metro: Sector 137 (~3 km)." },
+  { name: "Jaypee Klassic", sector: "Sector 128", area: "sec128",
+    lat: 28.5302, lng: 77.4055, band: "premium", rent: "₹50k–80k", bhk: "3 BHK",
+    notes: "Inside Wish Town. Newer towers, family-heavy. Easy expressway access." },
+  { name: "Mahagun Manorial", sector: "Sector 128", area: "sec128",
+    lat: 28.5295, lng: 77.4015, band: "ultra", rent: "₹85k–1.6L", bhk: "4 BHK",
+    notes: "Boutique ultra-premium. Large floor plates, low density. Premium clubhouse." },
+  { name: "ATS Knightsbridge", sector: "Sector 124", area: "sec128",
+    lat: 28.5378, lng: 77.3960, band: "ultra", rent: "₹90k–2L", bhk: "4/5 BHK",
+    notes: "Branded ultra-luxury. Limited supply on rent. Closest 5★ society to office." },
+  { name: "Mahagun Moderne", sector: "Sector 78", area: "sec7x",
+    lat: 28.5862, lng: 77.3812, band: "premium", rent: "₹40k–65k", bhk: "2/3 BHK",
+    notes: "Large established premium society. Metro: Sector 76 (~1 km). Schools + market on site." },
+  { name: "Prateek Wisteria", sector: "Sector 77", area: "sec7x",
+    lat: 28.5810, lng: 77.3845, band: "premium", rent: "₹35k–55k", bhk: "2/3 BHK",
+    notes: "Well-maintained, family-friendly. Walkable to Sector 76 metro." },
+  { name: "Amrapali Princely Estate", sector: "Sector 76", area: "sec7x",
+    lat: 28.5780, lng: 77.3790, band: "mid", rent: "₹28k–42k", bhk: "2/3 BHK",
+    notes: "Older building, lower rents. Some legal overhang historically — verify society status." },
+  { name: "Antriksh Golf View", sector: "Sector 78", area: "sec7x",
+    lat: 28.5870, lng: 77.3815, band: "mid", rent: "₹30k–45k", bhk: "2/3 BHK",
+    notes: "Tower society, basic but functional amenities. Close to NH-24." },
+  { name: "Aditya Urban Casa", sector: "Sector 78", area: "sec7x",
+    lat: 28.5850, lng: 77.3805, band: "mid", rent: "₹32k–48k", bhk: "2/3 BHK",
+    notes: "Modern construction. Good for young families. Metro accessible." },
+  { name: "Eldeco Olympia", sector: "Sector 75", area: "sec7x",
+    lat: 28.5805, lng: 77.3760, band: "premium", rent: "₹40k–60k", bhk: "2/3 BHK",
+    notes: "Well-rated. Larger 3BHKs available. Sector 76 metro walking distance." },
+  { name: "Pan Oasis", sector: "Sector 70", area: "sec7x",
+    lat: 28.5780, lng: 77.3700, band: "premium", rent: "₹42k–65k", bhk: "2/3 BHK",
+    notes: "Premium Sikka group project. Lush green, large central park. Quieter pocket." },
+  { name: "Supertech Capetown", sector: "Sector 74", area: "sec7x",
+    lat: 28.5840, lng: 77.3760, band: "mid", rent: "₹30k–45k", bhk: "2/3 BHK",
+    notes: "Huge society, multiple price points. Variable maintenance — check tower-wise." },
+  { name: "ATS Greens Village", sector: "Sector 93A", area: "central",
+    lat: 28.5640, lng: 77.3580, band: "premium", rent: "₹50k–75k", bhk: "3 BHK",
+    notes: "Premier ATS development. Excellent maintenance, mature community. Highly rated." },
+  { name: "ATS One Hamlet", sector: "Sector 104", area: "central",
+    lat: 28.5444, lng: 77.3650, band: "ultra", rent: "₹65k–1L", bhk: "3/4 BHK",
+    notes: "Top-tier ATS project. Spacious units, low density. Premium clubhouse." },
+  { name: "Cleo County", sector: "Sector 121", area: "central",
+    lat: 28.5582, lng: 77.3787, band: "premium", rent: "₹45k–65k", bhk: "2/3 BHK",
+    notes: "ABA-built premium society. Greek-themed, large pool/clubhouse. Family-popular." },
+  { name: "Lotus Panache", sector: "Sector 110", area: "central",
+    lat: 28.5620, lng: 77.3680, band: "premium", rent: "₹45k–70k", bhk: "2/3/4 BHK",
+    notes: "Massive society, multiple configurations. Metro: Botanical Garden (~6 km)." },
+  { name: "Lotus Boulevard", sector: "Sector 100", area: "central",
+    lat: 28.5710, lng: 77.3585, band: "premium", rent: "₹40k–60k", bhk: "2/3 BHK",
+    notes: "Established 3C group society. Good amenities, well-maintained." },
+  { name: "Prateek Stylome", sector: "Sector 45", area: "central",
+    lat: 28.5475, lng: 77.3325, band: "premium", rent: "₹50k–75k", bhk: "3/4 BHK",
+    notes: "Ultra-low-density boutique. Large units. Closest premium to Botanical Garden metro." },
+  { name: "Logix Blossom County", sector: "Sector 137", area: "expressway",
+    lat: 28.5160, lng: 77.4220, band: "mid", rent: "₹28k–42k", bhk: "2/3 BHK",
+    notes: "Metro: Sector 137 (on doorstep). Big society, IT-crowd heavy." },
+  { name: "Paras Tierea", sector: "Sector 137", area: "expressway",
+    lat: 28.5180, lng: 77.4250, band: "mid", rent: "₹28k–40k", bhk: "2/3 BHK",
+    notes: "Walkable to Sector 137 metro. Decent amenities for the price." },
+  { name: "Purvanchal Royal City", sector: "Sector 137", area: "expressway",
+    lat: 28.5150, lng: 77.4205, band: "mid", rent: "₹30k–45k", bhk: "2/3 BHK",
+    notes: "Premium-mid hybrid. Better-finished than typical Sec 137 stock." },
+  { name: "Logix Blossom Zest", sector: "Sector 143", area: "expressway",
+    lat: 28.5050, lng: 77.4320, band: "mid", rent: "₹25k–38k", bhk: "2/3 BHK",
+    notes: "Newer, modern construction. Metro: Sector 143 (5 mins). Budget-friendly." },
+  { name: "ATS Pristine", sector: "Sector 150", area: "expressway",
+    lat: 28.4720, lng: 77.4760, band: "premium", rent: "₹45k–65k", bhk: "3/4 BHK",
+    notes: "Premium ATS project. 80% open green. Quieter, leafier — but further from office." },
+  { name: "Tata Eureka Park", sector: "Sector 150", area: "expressway",
+    lat: 28.4710, lng: 77.4790, band: "premium", rent: "₹40k–60k", bhk: "2/3 BHK",
+    notes: "Tata Housing brand, well-built. Sports infrastructure on campus." },
+  { name: "Godrej Palm Retreat", sector: "Sector 150", area: "expressway",
+    lat: 28.4760, lng: 77.4810, band: "premium", rent: "₹50k–75k", bhk: "3/4 BHK",
+    notes: "Newer Godrej project. Resort-style amenities. Top pick on expressway." },
+  { name: "ACE Platinum", sector: "Sector 152", area: "expressway",
+    lat: 28.4650, lng: 77.4800, band: "mid", rent: "₹28k–42k", bhk: "2/3 BHK",
+    notes: "Affordable premium feel. Further from office (~15 km) — longer commute." },
+  { name: "Mahagun Mywoods", sector: "Sector 16C, GN West", area: "expressway",
+    lat: 28.6053, lng: 77.4253, band: "mid", rent: "₹22k–35k", bhk: "2/3 BHK",
+    notes: "Greater Noida West. Cheapest option but ~20 km via NH-24. Verify commute." },
+
+  // ===== ADDED: Sector 107 cluster =====
+  { name: "Lotus 300", sector: "Sector 107", area: "central",
+    lat: 28.5670, lng: 77.3640, band: "ultra", rent: "₹80k–1.4L", bhk: "3/4 BHK", status: "ready",
+    notes: "3C Group ultra-premium. Spacious 300+ sqm units. Low-density, designer interiors. Near Botanical Garden metro corridor." },
+  { name: "County 107", sector: "Sector 107", area: "central",
+    lat: 28.5660, lng: 77.3625, band: "premium", rent: "₹40k–60k", bhk: "3 BHK", status: "ready",
+    notes: "ABA Builders (Cleo County family). Greek-themed amenities, mature greenery." },
+
+  // ===== ADDED: Sector 50/51 (older premium) =====
+  { name: "Mahagun Mansion", sector: "Sector 51", area: "sec7x",
+    lat: 28.5910, lng: 77.3580, band: "premium", rent: "₹35k–55k", bhk: "2/3 BHK", status: "ready",
+    notes: "Mahagun build quality. Quiet pocket, schools/markets walkable. Metro: Sec 50 (~1 km)." },
+  { name: "ATS Pious Orchards", sector: "Sector 51", area: "sec7x",
+    lat: 28.5905, lng: 77.3605, band: "premium", rent: "₹40k–60k", bhk: "3 BHK", status: "ready",
+    notes: "Boutique ATS project. Newer build, low density, premium fit-and-finish." },
+  { name: "Stellar Greens", sector: "Sector 50", area: "sec7x",
+    lat: 28.5980, lng: 77.3585, band: "mid", rent: "₹28k–42k", bhk: "2/3 BHK", status: "ready",
+    notes: "Established society near Sector 50 metro. Lower rents, mature trees." },
+
+  // ===== ADDED: Sector 79 / 78 newer =====
+  { name: "Civitech Stadia", sector: "Sector 79", area: "sec7x",
+    lat: 28.5830, lng: 77.3870, band: "premium", rent: "₹35k–55k", bhk: "2/3 BHK", status: "ready",
+    notes: "Modern construction, well-rated maintenance. Walkable to Sec 81 metro." },
+  { name: "Migsun Atharva", sector: "Sector 79", area: "sec7x",
+    lat: 28.5825, lng: 77.3895, band: "mid", rent: "₹28k–42k", bhk: "2/3 BHK", status: "ready",
+    notes: "Budget-mid option in the Sec 79 cluster. Decent build, basic amenities." },
+  { name: "Skytech Matrott", sector: "Sector 76", area: "sec7x",
+    lat: 28.5790, lng: 77.3795, band: "mid", rent: "₹30k–45k", bhk: "2/3 BHK", status: "ready",
+    notes: "Functional tower society. Walking distance to Sec 76 metro." },
+  { name: "Conscient Habitat", sector: "Sector 78", area: "sec7x",
+    lat: 28.5865, lng: 77.3825, band: "mid", rent: "₹30k–45k", bhk: "2/3 BHK", status: "ready",
+    notes: "Budget-premium tower society. Compact units, decent club." },
+
+  // ===== ADDED: Central Noida 93/94/119 =====
+  { name: "Express Park View II", sector: "Sector 93A", area: "central",
+    lat: 28.5638, lng: 77.3575, band: "premium", rent: "₹45k–65k", bhk: "3 BHK", status: "ready",
+    notes: "CHD Developers. Family-popular, large green areas. Next to ATS Greens." },
+  { name: "M3M The Cullinan", sector: "Sector 94", area: "central",
+    lat: 28.5530, lng: 77.3450, band: "ultra", rent: "Pre-launch", bhk: "3/4 BHK", status: "upcoming",
+    notes: "Under-construction ultra-luxury. Premium Yamuna-front address by M3M. Possession 2027+. For info only — no rentals yet." },
+  { name: "Eldeco Inspire", sector: "Sector 119", area: "central",
+    lat: 28.5685, lng: 77.3950, band: "premium", rent: "₹40k–60k", bhk: "3 BHK", status: "ready",
+    notes: "Eldeco brand reliability. Close to FNG expressway, good road links." },
+  { name: "Saviour Park Royale", sector: "Sector 121", area: "central",
+    lat: 28.5610, lng: 77.3800, band: "premium", rent: "₹35k–55k", bhk: "2/3 BHK", status: "ready",
+    notes: "Premium-mid hybrid. Walking distance to Cleo County / Sec 121 market." },
+
+  // ===== ADDED: Sector 128 new luxury =====
+  { name: "Max Estates 128", sector: "Sector 128", area: "sec128",
+    lat: 28.5275, lng: 77.4070, band: "ultra", rent: "Pre-launch", bhk: "3/4 BHK", status: "upcoming",
+    notes: "New luxury launch inside Wish Town by Max Estates. Wellness-themed design. Possession 2027. For info only." },
+
+  // ===== ADDED: Expressway 137 / 143B / 146 / 150 / 152 =====
+  { name: "The Belaire (Logix)", sector: "Sector 137", area: "expressway",
+    lat: 28.5170, lng: 77.4180, band: "premium", rent: "₹35k–55k", bhk: "3 BHK", status: "ready",
+    notes: "Premium tower on the expressway. Walkable to Sec 137 metro." },
+  { name: "Sikka Karnam Greens", sector: "Sector 143B", area: "expressway",
+    lat: 28.5045, lng: 77.4340, band: "premium", rent: "₹40k–60k", bhk: "3 BHK", status: "ready",
+    notes: "Premium Sikka project. Walkable to Sec 143 metro. Solid maintenance." },
+  { name: "Godrej Tropical Isle", sector: "Sector 146", area: "expressway",
+    lat: 28.4880, lng: 77.4520, band: "premium", rent: "Pre-launch", bhk: "3/4 BHK", status: "upcoming",
+    notes: "Newly launched Godrej project. Resort-themed amenities, biophilic design. Possession 2027+." },
+  { name: "Godrej Nest", sector: "Sector 150", area: "expressway",
+    lat: 28.4755, lng: 77.4810, band: "premium", rent: "₹45k–65k", bhk: "2/3 BHK", status: "new",
+    notes: "Recently delivered Godrej. Quiet, leafy, good for families. Premier finishes." },
+  { name: "ACE Starlit", sector: "Sector 152", area: "expressway",
+    lat: 28.4640, lng: 77.4790, band: "premium", rent: "₹40k–60k", bhk: "3 BHK", status: "new",
+    notes: "Recently delivered ACE project. Modern fit-and-finish, low density." },
+
+  // ===== ADDED: Sector 78 ultra + mid =====
+  { name: "Mahagun Mezzaria", sector: "Sector 78", area: "sec7x",
+    lat: 28.5878, lng: 77.3820, band: "ultra", rent: "₹70k–1.2L", bhk: "3/4 BHK", status: "ready",
+    notes: "Mahagun ultra-luxury flagship. Boutique 4BHK & duplexes, low density, premium clubhouse. Walkable to Sec 76 metro." },
+  { name: "Hawelia Valenova Park", sector: "Sector 78", area: "sec7x",
+    lat: 28.5860, lng: 77.3810, band: "mid", rent: "₹28k–42k", bhk: "2/3 BHK", status: "ready",
+    notes: "Mid-budget Sec 78 option. Functional society, NH-24 access nearby." },
+
+  // ===== ADDED: Sector 77 =====
+  { name: "Civitech Sampriti", sector: "Sector 77", area: "sec7x",
+    lat: 28.5800, lng: 77.3838, band: "mid", rent: "₹30k–45k", bhk: "2/3 BHK", status: "ready",
+    notes: "Modern construction. Walking distance to Sec 76 metro. Decent maintenance." },
+  { name: "Antriksh Forest", sector: "Sector 77", area: "sec7x",
+    lat: 28.5815, lng: 77.3835, band: "mid", rent: "₹28k–40k", bhk: "2/3 BHK", status: "ready",
+    notes: "Older tower society. Lower rents, good for budget conscious." },
+
+  // ===== ADDED: Sector 79 / 75 =====
+  { name: "Mapsko Casabella", sector: "Sector 79", area: "sec7x",
+    lat: 28.5830, lng: 77.3910, band: "premium", rent: "₹35k–55k", bhk: "2/3 BHK", status: "ready",
+    notes: "Well-built premium Mapsko project. Modern amenities, family popular." },
+  { name: "JM Aroma", sector: "Sector 75", area: "sec7x",
+    lat: 28.5810, lng: 77.3770, band: "mid", rent: "₹30k–45k", bhk: "2/3 BHK", status: "ready",
+    notes: "Mid-range tower society near Sec 76 metro. Decent build quality." },
+
+  // ===== ADDED: Sector 137 cluster =====
+  { name: "Supertech Ecociti", sector: "Sector 137", area: "expressway",
+    lat: 28.5170, lng: 77.4210, band: "mid", rent: "₹28k–42k", bhk: "2/3 BHK", status: "ready",
+    notes: "Large Supertech project on expressway. Tower quality varies — check before signing." },
+  { name: "Ajnara Daffodil", sector: "Sector 137", area: "expressway",
+    lat: 28.5165, lng: 77.4225, band: "mid", rent: "₹25k–38k", bhk: "2/3 BHK", status: "ready",
+    notes: "Budget-friendly, IT-crowd heavy. Sec 137 metro walkable." },
+  { name: "Antriksh Sanskriti Apartments", sector: "Sector 137", area: "expressway",
+    lat: 28.5175, lng: 77.4215, band: "mid", rent: "₹26k–38k", bhk: "2/3 BHK", status: "ready",
+    notes: "Older society. Budget rents, basic amenities. Best for cost-conscious renters." },
+
+  // ===== ADDED: Sector 143 cluster =====
+  { name: "Capital Athena", sector: "Sector 143", area: "expressway",
+    lat: 28.5060, lng: 77.4320, band: "mid", rent: "₹25k–38k", bhk: "2/3 BHK", status: "ready",
+    notes: "Mid-budget tower society. Walkable to Sec 143 metro." },
+  { name: "Gulshan Bellina", sector: "Sector 143", area: "expressway",
+    lat: 28.5070, lng: 77.4310, band: "premium", rent: "₹30k–45k", bhk: "2/3 BHK", status: "ready",
+    notes: "Gulshan group project. Mid-premium build, walkable to metro." },
+  { name: "Sikka Kaamya Greens", sector: "Sector 143", area: "expressway",
+    lat: 28.5055, lng: 77.4330, band: "premium", rent: "₹35k–50k", bhk: "2/3 BHK", status: "ready",
+    notes: "Sikka group quality. Premium feel, well-rated maintenance." },
+
+  // ===== ADDED: Sector 121 / 107 / 97 =====
+  { name: "Stellar MI Citihomes", sector: "Sector 121", area: "central",
+    lat: 28.5575, lng: 77.3790, band: "mid", rent: "₹25k–40k", bhk: "2/3 BHK", status: "ready",
+    notes: "Affordable option near Cleo County. Functional, basic amenities — decent commute." },
+  { name: "Sunworld Vanalika", sector: "Sector 107", area: "central",
+    lat: 28.5680, lng: 77.3635, band: "premium", rent: "₹40k–60k", bhk: "2/3 BHK", status: "ready",
+    notes: "Sunworld project near Lotus 300. Mid-premium build, family-friendly." },
+  { name: "Lotus Greens Park", sector: "Sector 97", area: "central",
+    lat: 28.5740, lng: 77.3500, band: "premium", rent: "₹40k–60k", bhk: "3 BHK", status: "ready",
+    notes: "3C Group project. Located between Lotus Boulevard and Lotus Panache. Quiet sector." },
+
+  // ===== ADDED: Sector 93B ultra =====
+  { name: "Spaze Privy The Address", sector: "Sector 93B", area: "central",
+    lat: 28.5635, lng: 77.3540, band: "ultra", rent: "₹70k–1L", bhk: "3/4 BHK", status: "ready",
+    notes: "Spaze ultra-luxury. Boutique low-density, premium location adjacent to ATS One Hamlet." },
+
+  // ===== ADDED: Expressway extended (168 / 152) =====
+  { name: "Paras Seasons", sector: "Sector 168", area: "expressway",
+    lat: 28.4710, lng: 77.4860, band: "premium", rent: "₹35k–55k", bhk: "2/3 BHK", status: "ready",
+    notes: "Paras Buildtech project on far expressway. Newer construction, quieter pocket." },
+  { name: "Supertech Hill Town", sector: "Sector 152", area: "expressway",
+    lat: 28.4665, lng: 77.4780, band: "mid", rent: "₹25k–40k", bhk: "2/3 BHK", status: "ready",
+    notes: "Budget Supertech project. Far (~17 km) but lowest expressway rents." },
+
+  // ===== ADDED: Mahagun cluster expansion =====
+  { name: "Mahagun Mirabella", sector: "Sector 79", area: "sec7x",
+    lat: 28.5835, lng: 77.3895, band: "ultra", rent: "₹55k–90k", bhk: "3/4 BHK", status: "ready",
+    notes: "Mahagun ultra-luxury villas + apartments. Boutique scale, large balconies, premium clubhouse. Newer construction." },
+  { name: "Mahagun Manor", sector: "Sector 50", area: "sec7x",
+    lat: 28.5965, lng: 77.3575, band: "premium", rent: "₹40k–65k", bhk: "3 BHK", status: "ready",
+    notes: "Mahagun premium project. Established community, mature greenery. Sec 50 metro nearby." },
+  { name: "Mahagun Maple", sector: "Sector 50", area: "sec7x",
+    lat: 28.5970, lng: 77.3580, band: "premium", rent: "₹38k–58k", bhk: "2/3 BHK", status: "ready",
+    notes: "Sister project to Mahagun Manor. Walking distance to Sec 50 metro and markets." },
+
+  // ===== ADDED: Premium Sec 78 / 79 =====
+  { name: "The Hyde Park", sector: "Sector 78", area: "sec7x",
+    lat: 28.5872, lng: 77.3818, band: "ultra", rent: "₹55k–85k", bhk: "3/4 BHK", status: "ready",
+    notes: "Premium high-rise tower. Modern amenities, large floor plates. Walkable to Sec 76 metro." },
+  { name: "Migsun Wynn", sector: "Sector 79", area: "sec7x",
+    lat: 28.5828, lng: 77.3888, band: "mid", rent: "₹28k–42k", bhk: "2/3 BHK", status: "ready",
+    notes: "Budget-mid option in Sec 79 cluster. Functional society, decent amenities." },
+
+  // ===== ADDED: Expressway + Central =====
+  { name: "Logix Twin Towers", sector: "Sector 132", area: "expressway",
+    lat: 28.5210, lng: 77.4100, band: "premium", rent: "₹45k–65k", bhk: "3 BHK", status: "ready",
+    notes: "Premium tower society on the expressway side. Modern build, larger 3BHK floor plates." },
+  { name: "Antriksh Heights", sector: "Sector 84", area: "central",
+    lat: 28.5790, lng: 77.3650, band: "mid", rent: "₹28k–40k", bhk: "2/3 BHK", status: "ready",
+    notes: "Mid-budget option. Older tower society, decent maintenance." },
+  { name: "Capital Cancun", sector: "Sector 119", area: "central",
+    lat: 28.5680, lng: 77.3940, band: "mid", rent: "₹28k–42k", bhk: "2/3 BHK", status: "ready",
+    notes: "Capital Group project. Walking distance to Eldeco Inspire. Family-popular." },
+
+  // ===== ADDED: Sector 75 / 76 cluster =====
+  { name: "Panchsheel Pratishtha", sector: "Sector 75", area: "sec7x",
+    lat: 28.5800, lng: 77.3745, band: "premium", rent: "₹35k–58k", bhk: "2/3/4 BHK", status: "ready",
+    notes: "Panchsheel Buildtech. Well-regarded premium society, large clubhouse + sports facilities. Walkable to Sec 76 metro." },
+  { name: "Gardenia Gateway", sector: "Sector 75", area: "sec7x",
+    lat: 28.5818, lng: 77.3755, band: "mid", rent: "₹30k–45k", bhk: "2/3 BHK", status: "ready",
+    notes: "Mid-budget tower society. Decent amenities, families-heavy. Sec 76 metro walking distance." },
+  { name: "Sethi Max Royal", sector: "Sector 76", area: "sec7x",
+    lat: 28.5795, lng: 77.3800, band: "premium", rent: "₹35k–55k", bhk: "2/3 BHK", status: "ready",
+    notes: "Sethi Group premium project. Compact, well-maintained towers. Close to Sec 76 metro." },
+  { name: "Exotica Eastern Court", sector: "Sector 75", area: "sec7x",
+    lat: 28.5790, lng: 77.3768, band: "premium", rent: "₹35k–55k", bhk: "2/3 BHK", status: "ready",
+    notes: "Exotica Housing. Themed landscaping, good amenities. Family-popular Sec 75 address." },
+  { name: "Sam Palms (Samridhi Grand Avenue)", sector: "Sector 75", area: "sec7x",
+    lat: 28.5825, lng: 77.3740, band: "mid", rent: "₹28k–42k", bhk: "2/3 BHK", status: "ready",
+    notes: "Budget-mid option in Sec 75 cluster. Functional, decent value for the location." }
+];
+
+// =============== RATINGS ===============
+// Per-society build quality + community reviews (0-10 each)
+// Defaults to {build:6, reviews:6} if not listed (assumed average)
+const RATINGS = {
+  "Jaypee Greens Wish Town – Pavilion Court": { build: 8, reviews: 8 },
+  "Jaypee Klassic": { build: 8, reviews: 7 },
+  "Mahagun Manorial": { build: 9, reviews: 9 },
+  "ATS Knightsbridge": { build: 10, reviews: 9 },
+  "Max Estates 128": { build: 10, reviews: 8 },
+  "Mahagun Moderne": { build: 8, reviews: 8 },
+  "Mahagun Mezzaria": { build: 9, reviews: 9 },
+  "Mahagun Mirabella": { build: 9, reviews: 8 },
+  "The Hyde Park": { build: 8, reviews: 7 },
+  "Hawelia Valenova Park": { build: 6, reviews: 6 },
+  "Antriksh Golf View": { build: 5, reviews: 5 },
+  "Aditya Urban Casa": { build: 6, reviews: 6 },
+  "Conscient Habitat": { build: 6, reviews: 6 },
+  "Mapsko Casabella": { build: 7, reviews: 7 },
+  "Migsun Wynn": { build: 6, reviews: 6 },
+  "Prateek Wisteria": { build: 7, reviews: 8 },
+  "Civitech Sampriti": { build: 7, reviews: 7 },
+  "Antriksh Forest": { build: 5, reviews: 5 },
+  "Amrapali Princely Estate": { build: 5, reviews: 5 },
+  "Eldeco Olympia": { build: 8, reviews: 8 },
+  "JM Aroma": { build: 6, reviews: 6 },
+  "Skytech Matrott": { build: 6, reviews: 6 },
+  "Pan Oasis": { build: 8, reviews: 8 },
+  "Supertech Capetown": { build: 6, reviews: 6 },
+  "Mahagun Mansion": { build: 8, reviews: 8 },
+  "ATS Pious Orchards": { build: 9, reviews: 8 },
+  "Stellar Greens": { build: 6, reviews: 6 },
+  "Mahagun Manor": { build: 8, reviews: 8 },
+  "Mahagun Maple": { build: 7, reviews: 7 },
+  "ATS Greens Village": { build: 9, reviews: 9 },
+  "ATS One Hamlet": { build: 10, reviews: 9 },
+  "Express Park View II": { build: 7, reviews: 7 },
+  "M3M The Cullinan": { build: 10, reviews: 8 },
+  "Lotus Greens Park": { build: 8, reviews: 7 },
+  "Spaze Privy The Address": { build: 9, reviews: 8 },
+  "Lotus Boulevard": { build: 7, reviews: 8 },
+  "Lotus 300": { build: 9, reviews: 9 },
+  "County 107": { build: 7, reviews: 7 },
+  "Sunworld Vanalika": { build: 7, reviews: 7 },
+  "Lotus Panache": { build: 7, reviews: 8 },
+  "Eldeco Inspire": { build: 8, reviews: 7 },
+  "Capital Cancun": { build: 6, reviews: 6 },
+  "Cleo County": { build: 8, reviews: 9 },
+  "Saviour Park Royale": { build: 6, reviews: 6 },
+  "Stellar MI Citihomes": { build: 6, reviews: 6 },
+  "Antriksh Heights": { build: 5, reviews: 5 },
+  "Prateek Stylome": { build: 8, reviews: 8 },
+  "Logix Twin Towers": { build: 7, reviews: 7 },
+  "Logix Blossom County": { build: 6, reviews: 6 },
+  "Paras Tierea": { build: 6, reviews: 6 },
+  "Purvanchal Royal City": { build: 7, reviews: 7 },
+  "The Belaire (Logix)": { build: 7, reviews: 7 },
+  "Supertech Ecociti": { build: 6, reviews: 6 },
+  "Ajnara Daffodil": { build: 5, reviews: 5 },
+  "Antriksh Sanskriti Apartments": { build: 5, reviews: 5 },
+  "Logix Blossom Zest": { build: 6, reviews: 6 },
+  "Capital Athena": { build: 6, reviews: 6 },
+  "Gulshan Bellina": { build: 7, reviews: 7 },
+  "Sikka Karnam Greens": { build: 7, reviews: 7 },
+  "Sikka Kaamya Greens": { build: 7, reviews: 7 },
+  "ATS Pristine": { build: 9, reviews: 9 },
+  "Tata Eureka Park": { build: 9, reviews: 8 },
+  "Godrej Palm Retreat": { build: 9, reviews: 9 },
+  "ACE Platinum": { build: 7, reviews: 7 },
+  "ACE Starlit": { build: 7, reviews: 7 },
+  "Godrej Nest": { build: 9, reviews: 9 },
+  "Godrej Tropical Isle": { build: 10, reviews: 9 },
+  "Paras Seasons": { build: 7, reviews: 7 },
+  "Supertech Hill Town": { build: 6, reviews: 6 },
+  "Mahagun Mywoods": { build: 7, reviews: 7 },
+  "Panchsheel Pratishtha": { build: 7, reviews: 8 },
+  "Gardenia Gateway": { build: 6, reviews: 6 },
+  "Sethi Max Royal": { build: 7, reviews: 7 },
+  "Exotica Eastern Court": { build: 7, reviews: 7 },
+  "Sam Palms (Samridhi Grand Avenue)": { build: 6, reviews: 6 }
+};
+
+function proximityScore(distKm) {
+  if (distKm <= 3) return 10;
+  if (distKm <= 6) return 9;
+  if (distKm <= 9) return 8;
+  if (distKm <= 12) return 7;
+  if (distKm <= 15) return 6;
+  if (distKm <= 18) return 5;
+  return 4;
+}
+
+function valueScore(soc) {
+  if (soc.rent === 'Pre-launch') return 6;
+  const m = soc.rent.match(/₹(\d+(?:\.\d+)?)\s*([kKlL])/);
+  if (!m) return 6;
+  const low = parseFloat(m[1]) * (m[2].toLowerCase() === 'l' ? 100 : 1);
+  if (soc.band === 'mid') {
+    if (low < 28) return 10;
+    if (low < 32) return 9;
+    if (low < 38) return 8;
+    if (low < 42) return 7;
+    return 6;
+  }
+  if (soc.band === 'premium') {
+    if (low < 38) return 10;
+    if (low < 45) return 9;
+    if (low < 52) return 8;
+    if (low < 60) return 7;
+    return 6;
+  }
+  if (soc.band === 'ultra') {
+    if (low < 70) return 10;
+    if (low < 80) return 9;
+    if (low < 90) return 8;
+    if (low < 110) return 7;
+    return 6;
+  }
+  return 7;
+}
+
+function societyRating(soc, distKm) {
+  const r = RATINGS[soc.name] || { build: 6, reviews: 6 };
+  const prox = proximityScore(distKm);
+  const value = valueScore(soc);
+  // Weights: proximity 30%, build 25%, reviews 25%, value 20%
+  const overall = (prox * 0.30) + (r.build * 0.25) + (r.reviews * 0.25) + (value * 0.20);
+  return {
+    overall: Number(overall.toFixed(1)),
+    proximity: prox,
+    build: r.build,
+    reviews: r.reviews,
+    value: value
+  };
+}
+
+function ratingColor(score) {
+  if (score >= 8.5) return '#059669';
+  if (score >= 7.5) return '#10b981';
+  if (score >= 6.5) return '#84cc16';
+  if (score >= 5.5) return '#f59e0b';
+  if (score >= 4.5) return '#f97316';
+  return '#ef4444';
+}
+
+// =============== MAP ===============
+const map = L.map('map', { zoomControl: false }).setView([OFFICE.lat, OFFICE.lng], 13);
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+// Google Maps tiles
+const googleRoadmap = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}', {
+  maxZoom: 20, subdomains: ['0','1','2','3'], attribution: '&copy; Google Maps'
+});
+const googleSatellite = L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}', {
+  maxZoom: 20, subdomains: ['0','1','2','3'], attribution: '&copy; Google'
+});
+const googleHybrid = L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
+  maxZoom: 20, subdomains: ['0','1','2','3'], attribution: '&copy; Google'
+});
+const googleTerrain = L.tileLayer('https://mt{s}.google.com/vt/lyrs=p&hl=en&x={x}&y={y}&z={z}', {
+  maxZoom: 20, subdomains: ['0','1','2','3'], attribution: '&copy; Google'
+});
+googleRoadmap.addTo(map);
+L.control.layers({
+  'Roadmap': googleRoadmap,
+  'Satellite': googleSatellite,
+  'Hybrid': googleHybrid,
+  'Terrain': googleTerrain
+}, null, { position: 'topright', collapsed: false }).addTo(map);
+
+// Office marker
+const officeIcon = L.divIcon({
+  className: '',
+  html: `<div class="office-marker">
+    <span class="office-icon">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/><path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/></svg>
+    </span>
+    Leverage Edu
+  </div>`,
+  iconSize: [150, 32],
+  iconAnchor: [75, 38]
+});
+L.marker([OFFICE.lat, OFFICE.lng], { icon: officeIcon, zIndexOffset: 1000 })
+  .addTo(map)
+  .bindPopup(`<div class="popup-card"><div class="popup-title">${OFFICE.name}</div><div class="popup-sector">${OFFICE.address}</div></div>`);
+
+const bandColors = {
+  mid: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+  premium: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+  ultra: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+};
+
+// Popup options — Leaflet's built-in maxHeight makes the content scroll if it overflows.
+// autoPanPadding ensures the popup never lands too close to the viewport edges.
+const POPUP_OPTS = {
+  maxHeight: Math.floor(window.innerHeight * 0.7),
+  autoPan: true,
+  autoPanPadding: L.point(50, 60),
+  keepInView: true
+};
+window.addEventListener('resize', () => {
+  POPUP_OPTS.maxHeight = Math.floor(window.innerHeight * 0.7);
+});
+
+const markers = {};
+let activeRoute = null;
+let activeMarkerName = null;
+
+function makeSocietyIcon(band, active = false) {
+  return L.divIcon({
+    className: '',
+    html: `<div class="society-marker${active ? ' active' : ''}" style="background:${bandColors[band]}"></div>`,
+    iconSize: [22, 22],
+    iconAnchor: [11, 11]
+  });
+}
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 +
+            Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+            Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+const routeCache = {};
+async function fetchRoute(soc) {
+  if (routeCache[soc.name]) return routeCache[soc.name];
+  const url = `https://router.project-osrm.org/route/v1/driving/${OFFICE.lng},${OFFICE.lat};${soc.lng},${soc.lat}?overview=full&geometries=geojson`;
+  try {
+    const r = await fetch(url);
+    const j = await r.json();
+    if (j.code === 'Ok' && j.routes && j.routes[0]) {
+      const route = j.routes[0];
+      const result = {
+        distanceKm: (route.distance / 1000).toFixed(1),
+        durationMin: Math.round(route.duration / 60),
+        geometry: route.geometry,
+        source: 'OSRM'
+      };
+      routeCache[soc.name] = result;
+      return result;
+    }
+  } catch (e) { console.warn('OSRM failed:', e); }
+  const straight = haversine(OFFICE.lat, OFFICE.lng, soc.lat, soc.lng);
+  const result = {
+    distanceKm: (straight * 1.3).toFixed(1),
+    durationMin: Math.round((straight * 1.3) / 25 * 60),
+    geometry: null,
+    source: 'estimate'
+  };
+  routeCache[soc.name] = result;
+  return result;
+}
+
+function ratingDescription(score) {
+  if (score >= 8.5) return 'Excellent · top pick';
+  if (score >= 7.5) return 'Very good · recommended';
+  if (score >= 6.5) return 'Good · worth considering';
+  if (score >= 5.5) return 'Decent · check details';
+  if (score >= 4.5) return 'Below average';
+  return 'Skip · poor fit';
+}
+
+function ratingSectionHTML(soc, distKm) {
+  const r = societyRating(soc, distKm);
+  const color = ratingColor(r.overall);
+  const bar = (label, value) => `
+    <div class="popup-rating-bar">
+      <span class="popup-rating-bar-label">${label}</span>
+      <div class="popup-rating-bar-track">
+        <div class="popup-rating-bar-fill" style="width:${value*10}%; background:${ratingColor(value)}"></div>
+      </div>
+      <span class="popup-rating-bar-value">${value}</span>
+    </div>`;
+  return `<div class="popup-rating">
+    <div class="popup-rating-header">
+      <div class="popup-rating-circle" style="background:${color}">${r.overall}</div>
+      <div class="popup-rating-meta">
+        <div class="popup-rating-label">Overall rating</div>
+        <div class="popup-rating-desc">${ratingDescription(r.overall)}</div>
+      </div>
+    </div>
+    <div class="popup-rating-bars">
+      ${bar('Proximity', r.proximity)}
+      ${bar('Construction', r.build)}
+      ${bar('Reviews', r.reviews)}
+      ${bar('Value (rent)', r.value)}
+    </div>
+  </div>`;
+}
+
+function societyInitial(soc) {
+  const words = soc.name.split(/\s+/);
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+  return soc.name.substring(0, 2).toUpperCase();
+}
+
+function imageSeed(soc) {
+  return soc.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function societyImageUrl(soc) {
+  const tags = soc.band === 'ultra' ? 'luxury,apartment,building,modern' :
+               soc.band === 'premium' ? 'apartment,building,modern,architecture' :
+               'apartment,building,housing,residential';
+  return `https://loremflickr.com/600/300/${tags}?lock=${imageSeed(soc)}`;
+}
+
+function googleImagesUrl(soc) {
+  return `https://www.google.com/search?q=${encodeURIComponent(soc.name + ' ' + soc.sector + ' Noida')}&tbm=isch`;
+}
+
+function popupImageHTML(soc) {
+  const initial = societyInitial(soc);
+  const imgUrl = societyImageUrl(soc);
+  const statusOverlay = soc.status === 'new' || soc.status === 'upcoming'
+    ? `<div class="popup-image-status-overlay">${statusBadge(soc.status)}</div>` : '';
+  return `<div class="popup-image-wrap band-${soc.band}">
+    <div class="popup-image-fallback">
+      <span class="popup-image-letter">${initial}</span>
+    </div>
+    <img class="popup-image" src="${imgUrl}" alt="${soc.name}"
+         onload="this.classList.add('loaded'); this.parentElement.classList.add('has-image');"
+         onerror="this.remove();" />
+    <svg class="popup-image-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg>
+    ${statusOverlay}
+    <a class="popup-image-photos" href="${googleImagesUrl(soc)}" target="_blank" rel="noopener" title="See real photos on Google Images">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      Photos
+    </a>
+  </div>`;
+}
+
+function listingsUrl(soc) {
+  const params = new URLSearchParams({
+    society: soc.name,
+    sector: soc.sector,
+    band: soc.band,
+    bhk: soc.bhk,
+    rent: soc.rent,
+    status: soc.status || 'ready'
+  });
+  return `listings.html?${params.toString()}`;
+}
+
+function listingsCTA(soc) {
+  return `<a class="listings-cta" href="${listingsUrl(soc)}" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+    View 3/4 BHK listings
+  </a>
+  <div class="listings-cta-sub">Filtered to <b>3 BHK / 4 BHK only</b> across NoBroker · MagicBricks · 99acres · SquareYards · Housing.com</div>`;
+}
+
+function statusBadge(status) {
+  if (status === 'new') return '<span class="status-badge new">New</span>';
+  if (status === 'upcoming') return '<span class="status-badge upcoming">Upcoming</span>';
+  return '';
+}
+
+function buildPopupHTML(soc, route) {
+  const isUpcoming = soc.status === 'upcoming';
+  const distKm = haversine(OFFICE.lat, OFFICE.lng, soc.lat, soc.lng);
+  const routeRows = route ?
+    `<div class="popup-row"><span>Distance</span><span class="strong">${route.distanceKm} km${route.source === 'estimate' ? ' <small style="font-weight:400;color:var(--ink-muted)">est.</small>' : ''}</span></div>
+     <div class="popup-row"><span>Drive time</span><span class="strong">~${route.durationMin} min</span></div>`
+    : `<div class="popup-row"><span>Distance</span><span class="popup-skeleton"></span></div>
+       <div class="popup-row"><span>Drive time</span><span class="popup-skeleton"></span></div>`;
+
+  return `<div class="popup-card">
+    ${popupImageHTML(soc)}
+    <div class="popup-title">${soc.name}</div>
+    <div class="popup-sector">${soc.sector}</div>
+    <div class="popup-row"><span>${isUpcoming ? 'Status' : 'Rent'}</span><span class="strong">${soc.rent}</span></div>
+    <div class="popup-row"><span>Config</span><span>${soc.bhk}</span></div>
+    ${routeRows}
+    <div class="popup-notes">${soc.notes}</div>
+    ${ratingSectionHTML(soc, distKm)}
+    ${listingsCTA(soc)}
+  </div>`;
+}
+
+async function selectSociety(soc) {
+  // Reset previous active marker
+  if (activeMarkerName && markers[activeMarkerName]) {
+    const prevSoc = SOCIETIES.find(s => s.name === activeMarkerName);
+    if (prevSoc) markers[activeMarkerName].setIcon(makeSocietyIcon(prevSoc.band, false));
+  }
+  activeMarkerName = soc.name;
+
+  // Highlight card
+  document.querySelectorAll('.society-card').forEach(c => c.classList.remove('active'));
+  const card = document.querySelector(`[data-name="${CSS.escape(soc.name)}"]`);
+  if (card) card.classList.add('active');
+
+  // Set active marker icon
+  const marker = markers[soc.name];
+  marker.setIcon(makeSocietyIcon(soc.band, true));
+
+  // Clear previous route
+  if (activeRoute) { map.removeLayer(activeRoute); activeRoute = null; }
+
+  // Open popup (loading)
+  marker.bindPopup(buildPopupHTML(soc, null), POPUP_OPTS).openPopup();
+
+  // Fetch route
+  const route = await fetchRoute(soc);
+  marker.setPopupContent(buildPopupHTML(soc, route));
+
+  // Draw route
+  if (route.geometry) {
+    activeRoute = L.geoJSON(route.geometry, {
+      style: { color: '#6366f1', weight: 5, opacity: 0.85, lineCap: 'round', lineJoin: 'round' }
+    }).addTo(map);
+    // Add a glowing halo
+    const halo = L.geoJSON(route.geometry, {
+      style: { color: '#6366f1', weight: 12, opacity: 0.15, lineCap: 'round' }
+    }).addTo(map);
+    activeRoute._halo = halo;
+    map.fitBounds(activeRoute.getBounds().pad(0.25));
+  } else {
+    activeRoute = L.polyline([[OFFICE.lat, OFFICE.lng], [soc.lat, soc.lng]], {
+      color: '#6366f1', weight: 3, opacity: 0.6, dashArray: '6,8'
+    }).addTo(map);
+    map.fitBounds(activeRoute.getBounds().pad(0.25));
+  }
+
+  // Update card meta
+  if (card) {
+    const meta = card.querySelector('.card-meta');
+    meta.innerHTML = `
+      <span class="card-meta-item">
+        <svg class="card-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <b>${route.distanceKm} km</b>
+      </span>
+      <span class="card-meta-item">
+        <svg class="card-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <b>~${route.durationMin} min</b>
+      </span>
+      <span class="card-bhk">${soc.bhk}</span>
+    `;
+  }
+}
+
+// Override removeLayer to also clean up halo
+const origRemoveLayer = map.removeLayer.bind(map);
+map.removeLayer = function(layer) {
+  if (layer && layer._halo) origRemoveLayer(layer._halo);
+  return origRemoveLayer(layer);
+};
+
+// Plot markers
+SOCIETIES.forEach(soc => {
+  const m = L.marker([soc.lat, soc.lng], { icon: makeSocietyIcon(soc.band) }).addTo(map);
+  m.bindPopup(buildPopupHTML(soc, null), POPUP_OPTS);
+  m.on('click', () => selectSociety(soc));
+  markers[soc.name] = m;
+});
+
+// =============== SIDEBAR ===============
+const listEl = document.getElementById('list');
+const sortBy = document.getElementById('sortBy');
+let currentBand = 'all';
+let currentArea = 'all';
+let currentStatus = 'all';
+let currentMinRating = 0;
+
+function priceOrder(band) { return band === 'mid' ? 1 : band === 'premium' ? 2 : 3; }
+
+function parseLowRent(rent) {
+  // ₹70k–1.5L → 70
+  const m = rent.match(/₹(\d+(?:\.\d+)?)\s*([kKlL])/);
+  if (!m) return 0;
+  const num = parseFloat(m[1]);
+  return m[2].toLowerCase() === 'l' ? num * 100 : num;
+}
+
+function renderList() {
+  let items = SOCIETIES.filter(s => {
+    const status = s.status || 'ready';
+    return (currentBand === 'all' || s.band === currentBand) &&
+           (currentArea === 'all' || s.area === currentArea) &&
+           (currentStatus === 'all' || status === currentStatus);
+  });
+
+  items.forEach(s => {
+    s._dist = haversine(OFFICE.lat, OFFICE.lng, s.lat, s.lng);
+    s._rating = societyRating(s, s._dist);
+  });
+
+  // Min rating filter
+  if (currentMinRating > 0) {
+    items = items.filter(s => s._rating.overall >= currentMinRating);
+  }
+
+  const sort = sortBy.value;
+  if (sort === 'distance') items.sort((a,b) => a._dist - b._dist);
+  else if (sort === 'rating') items.sort((a,b) => b._rating.overall - a._rating.overall);
+  else if (sort === 'price') items.sort((a,b) => priceOrder(a.band) - priceOrder(b.band) || parseLowRent(a.rent) - parseLowRent(b.rent));
+  else if (sort === 'priceDesc') items.sort((a,b) => priceOrder(b.band) - priceOrder(a.band) || parseLowRent(b.rent) - parseLowRent(a.rent));
+  else if (sort === 'name') items.sort((a,b) => a.name.localeCompare(b.name));
+
+  listEl.innerHTML = items.map(s => `
+    <div class="society-card band-${s.band}" data-name="${s.name}">
+      <div class="card-thumb band-${s.band}">
+        <span class="card-thumb-letter">${societyInitial(s)}</span>
+        <img src="${societyImageUrl(s)}" alt="" loading="lazy"
+             onload="this.classList.add('loaded')"
+             onerror="this.remove()" />
+        <span class="card-rating" style="background:${ratingColor(s._rating.overall)}" title="Rating ${s._rating.overall}/10 — ${ratingDescription(s._rating.overall)}">${s._rating.overall}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-header">
+          <div>
+            <div class="card-title">${s.name}${statusBadge(s.status)}</div>
+            <div class="card-sector">${s.sector}</div>
+          </div>
+          <span class="price-tag ${s.band}">${s.rent}</span>
+        </div>
+        <div class="card-meta">
+          <span class="card-meta-item">
+            <svg class="card-meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            ~<b>${s._dist.toFixed(1)} km</b>
+          </span>
+          <span class="card-bhk">${s.bhk}</span>
+          <a class="card-listings-link" href="${listingsUrl(s)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+            Listings
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  document.querySelectorAll('.society-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const name = card.dataset.name;
+      const soc = SOCIETIES.find(s => s.name === name);
+      map.setView([soc.lat, soc.lng], 14, { animate: true });
+      selectSociety(soc);
+    });
+  });
+
+  // Update stats
+  document.getElementById('statCount').textContent = items.length;
+  document.getElementById('listCount').textContent = `${items.length} shown`;
+  if (items.length > 0) {
+    const closest = items.reduce((a,b) => a._dist < b._dist ? a : b);
+    document.getElementById('statClosest').innerHTML = `${closest._dist.toFixed(1)} <small>km</small>`;
+    const pricedItems = items.filter(s => parseLowRent(s.rent) > 0);
+    if (pricedItems.length > 0) {
+      const rents = pricedItems.map(s => parseLowRent(s.rent));
+      const minR = Math.min(...rents);
+      const maxR = pricedItems.map(s => {
+        const m = s.rent.match(/–\s*(\d+(?:\.\d+)?)\s*([kKlL])/);
+        if (!m) return parseLowRent(s.rent);
+        return m[2].toLowerCase() === 'l' ? parseFloat(m[1]) * 100 : parseFloat(m[1]);
+      }).reduce((a,b) => Math.max(a,b), 0);
+      const fmt = n => n >= 100 ? `${(n/100).toFixed(1)}L` : `${Math.round(n)}k`;
+      document.getElementById('statRange').textContent = `₹${fmt(minR)}–${fmt(maxR)}`;
+    } else {
+      document.getElementById('statRange').textContent = 'Pre-launch';
+    }
+  } else {
+    document.getElementById('statClosest').textContent = '—';
+    document.getElementById('statRange').textContent = '—';
+  }
+
+  // Show/hide markers based on filter
+  SOCIETIES.forEach(s => {
+    const visible = items.includes(s);
+    if (visible) markers[s.name].addTo(map);
+    else map.removeLayer(markers[s.name]);
+  });
+}
+
+// Pill handlers
+document.querySelectorAll('#bandPills .pill').forEach(p => {
+  p.addEventListener('click', () => {
+    document.querySelectorAll('#bandPills .pill').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+    currentBand = p.dataset.band;
+    renderList();
+  });
+});
+document.querySelectorAll('#areaPills .pill').forEach(p => {
+  p.addEventListener('click', () => {
+    document.querySelectorAll('#areaPills .pill').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+    currentArea = p.dataset.area;
+    renderList();
+  });
+});
+document.querySelectorAll('#statusPills .pill').forEach(p => {
+  p.addEventListener('click', () => {
+    document.querySelectorAll('#statusPills .pill').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+    currentStatus = p.dataset.status;
+    renderList();
+  });
+});
+document.querySelectorAll('#ratingPills .pill').forEach(p => {
+  p.addEventListener('click', () => {
+    document.querySelectorAll('#ratingPills .pill').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+    currentMinRating = parseFloat(p.dataset.rating);
+    renderList();
+  });
+});
+sortBy.addEventListener('change', renderList);
+
+// Reset view
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (activeRoute) { map.removeLayer(activeRoute); activeRoute = null; }
+  if (activeMarkerName && markers[activeMarkerName]) {
+    const prevSoc = SOCIETIES.find(s => s.name === activeMarkerName);
+    if (prevSoc) markers[activeMarkerName].setIcon(makeSocietyIcon(prevSoc.band, false));
+    activeMarkerName = null;
+  }
+  document.querySelectorAll('.society-card').forEach(c => c.classList.remove('active'));
+  map.closePopup();
+  const allCoords = [[OFFICE.lat, OFFICE.lng], ...SOCIETIES.filter(s => {
+    const status = s.status || 'ready';
+    return (currentBand === 'all' || s.band === currentBand) &&
+           (currentArea === 'all' || s.area === currentArea) &&
+           (currentStatus === 'all' || status === currentStatus);
+  }).map(s => [s.lat, s.lng])];
+  map.fitBounds(allCoords, { padding: [60, 60] });
+});
+
+renderList();
+const allCoords = [[OFFICE.lat, OFFICE.lng], ...SOCIETIES.map(s => [s.lat, s.lng])];
+map.fitBounds(allCoords, { padding: [60, 60] });
+</script>
+</body>
+</html>

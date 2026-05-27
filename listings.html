@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Latest Rental Listings — Noida</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --border: rgba(15, 23, 42, 0.08);
+    --border-strong: rgba(15, 23, 42, 0.14);
+    --ink: #0f172a;
+    --ink-soft: #475569;
+    --ink-muted: #94a3b8;
+    --brand: #6366f1;
+    --brand-deep: #4f46e5;
+    --brand-soft: #eef2ff;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-lg: 24px;
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.06);
+    --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    top: -300px; left: -200px;
+    width: 800px; height: 800px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.10) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -400px; right: -200px;
+    width: 900px; height: 900px;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+  }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding: 8px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    transition: all 0.15s;
+  }
+  .back-link:hover { background: var(--brand-soft); color: var(--brand-deep); border-color: var(--brand); }
+
+  .open-all-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border: none;
+    border-radius: 999px;
+    padding: 10px 18px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .open-all-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px rgba(99, 102, 241, 0.45);
+  }
+  .open-all-btn:active { transform: translateY(0); }
+
+  .hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px 36px;
+    box-shadow: var(--shadow-lg);
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899, #f59e0b);
+  }
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--brand-deep);
+    background: var(--brand-soft);
+    padding: 5px 12px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--brand);
+    border-radius: 50%;
+  }
+  .hero h1 {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    margin: 0 0 12px;
+    line-height: 1.1;
+  }
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .meta-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 999px;
+  }
+  .meta-pill b {
+    color: var(--ink);
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin: 0 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .bhk-filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #fff;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    padding: 4px 10px;
+    border-radius: 999px;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  }
+  .bhk-filter-pill::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: #fff;
+    border-radius: 50%;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .site-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 22px 18px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-sm);
+  }
+  .site-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+  }
+  .site-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--accent);
+  }
+
+  .site-logo {
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+    margin-bottom: 4px;
+    line-height: 1.1;
+  }
+  .site-tagline {
+    font-size: 11.5px;
+    color: var(--ink-muted);
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+  .site-desc {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin-bottom: 16px;
+    flex-grow: 1;
+  }
+  .site-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 14px;
+  }
+  .site-tag {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .site-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    padding: 10px 14px;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all 0.15s;
+  }
+  .site-card:hover .site-cta {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+    box-shadow: 0 6px 16px var(--accent-shadow);
+  }
+
+  /* Site-specific accent colors */
+  .site-card.nobroker { --accent: #08b15a; --accent-soft: #e6f7ee; --accent-shadow: rgba(8, 177, 90, 0.35); }
+  .site-card.magicbricks { --accent: #d92836; --accent-soft: #fde9eb; --accent-shadow: rgba(217, 40, 54, 0.35); }
+  .site-card.acres99 { --accent: #ff6600; --accent-soft: #fff0e6; --accent-shadow: rgba(255, 102, 0, 0.35); }
+  .site-card.squareyards { --accent: #1f4ad6; --accent-soft: #e6ecfb; --accent-shadow: rgba(31, 74, 214, 0.35); }
+  .site-card.housing { --accent: #ee3654; --accent-soft: #fde9ed; --accent-shadow: rgba(238, 54, 84, 0.35); }
+  .site-card.olx { --accent: #002f34; --accent-soft: #e6eaeb; --accent-shadow: rgba(0, 47, 52, 0.35); }
+  .site-card.commonfloor { --accent: #f7941d; --accent-soft: #fef4e3; --accent-shadow: rgba(247, 148, 29, 0.35); }
+  .site-card.gimages { --accent: #4285f4; --accent-soft: #e8f0fe; --accent-shadow: rgba(66, 133, 244, 0.35); }
+  .site-card.bimages { --accent: #008373; --accent-soft: #e0f2f0; --accent-shadow: rgba(0, 131, 115, 0.35); }
+  .site-card.ymaps { --accent: #ea4335; --accent-soft: #fde7e5; --accent-shadow: rgba(234, 67, 53, 0.35); }
+  .site-card.mbreview { --accent: #d92836; --accent-soft: #fde9eb; --accent-shadow: rgba(217, 40, 54, 0.35); }
+  .site-card.acres99review, .site-card.99review { --accent: #ff6600; --accent-soft: #fff0e6; --accent-shadow: rgba(255, 102, 0, 0.35); }
+  .site-card.syreview { --accent: #1f4ad6; --accent-soft: #e6ecfb; --accent-shadow: rgba(31, 74, 214, 0.35); }
+  .site-card.greviews { --accent: #fbbc05; --accent-soft: #fef7e0; --accent-shadow: rgba(251, 188, 5, 0.35); }
+  .site-card.nbreview { --accent: #08b15a; --accent-soft: #e6f7ee; --accent-shadow: rgba(8, 177, 90, 0.35); }
+  .site-card.reddit { --accent: #ff4500; --accent-soft: #ffece5; --accent-shadow: rgba(255, 69, 0, 0.35); }
+
+  .reviews-section-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    color: var(--ink-soft);
+    background: #fef7e0;
+    border: 1px solid #fde68a;
+    padding: 3px 9px;
+    border-radius: 999px;
+  }
+  .reviews-section-hint::before {
+    content: '★';
+    color: #f59e0b;
+    font-size: 11px;
+  }
+  .reviews-explainer {
+    background: #fef7e0;
+    border-color: #fde68a;
+  }
+  .reviews-explainer b { color: #92400e; }
+
+  .secondary-link {
+    display: block;
+    margin-top: 10px;
+    padding: 8px 12px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .secondary-link:hover {
+    color: var(--brand-deep);
+    border-color: var(--brand);
+    background: var(--brand-soft);
+  }
+
+  .tips {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 26px;
+    box-shadow: var(--shadow-sm);
+  }
+  .tips h3 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin: 0 0 14px;
+  }
+  .tip-list { list-style: none; padding: 0; margin: 0; }
+  .tip-list li {
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    display: flex;
+    gap: 10px;
+  }
+  .tip-list li:last-child { border-bottom: 0; }
+  .tip-list b { color: var(--ink); font-weight: 600; }
+  .tip-emoji { flex-shrink: 0; }
+
+  .search-explainer {
+    background: var(--brand-soft);
+    border: 1px solid #c7d2fe;
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    margin-bottom: 20px;
+  }
+  .search-explainer b { color: var(--brand-deep); font-weight: 600; }
+
+  .popup-notice {
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    border: 1px solid #fed7aa;
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 12px;
+    color: #9a3412;
+    margin-bottom: 24px;
+    display: none;
+  }
+  .popup-notice.show { display: block; }
+  .popup-notice b { color: #7c2d12; }
+
+  footer {
+    margin-top: 36px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 11px;
+    color: var(--ink-muted);
+  }
+
+  /* Tablet (≤960px) */
+  @media (max-width: 960px) {
+    .container { padding: 32px 20px 48px; }
+    .hero { padding: 28px 28px; }
+    .hero h1 { font-size: 30px; }
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  }
+
+  /* Phone (≤640px) */
+  @media (max-width: 640px) {
+    body::before, body::after { display: none; }
+    .container { padding: 20px 14px 32px; }
+    .nav { flex-direction: column; gap: 10px; align-items: stretch; }
+    .nav .back-link, .nav .open-all-btn { justify-content: center; }
+    .open-all-btn { font-size: 12.5px; padding: 11px 16px; }
+    .back-link { padding: 9px 14px; }
+    .hero { padding: 22px 20px; border-radius: 16px; }
+    .hero h1 { font-size: 24px; }
+    .hero-eyebrow { font-size: 10px; padding: 4px 10px; margin-bottom: 10px; }
+    .hero-meta { gap: 5px; }
+    .meta-pill { font-size: 11px; padding: 5px 10px; }
+    .meta-pill b { font-size: 11px; }
+    .section-title { font-size: 12px; gap: 8px; margin-bottom: 12px; }
+    .bhk-filter-pill, .reviews-section-hint { font-size: 9.5px; padding: 3px 8px; }
+    .search-explainer { font-size: 12px; padding: 11px 14px; margin-bottom: 16px; }
+    .grid { grid-template-columns: 1fr; gap: 12px; margin-bottom: 24px; }
+    .site-card { padding: 18px 18px 16px; border-radius: 14px; }
+    .site-logo { font-size: 17px; }
+    .site-tagline { font-size: 11px; margin-bottom: 10px; }
+    .site-desc { font-size: 12px; margin-bottom: 12px; }
+    .site-tags { gap: 4px; margin-bottom: 12px; }
+    .site-tag { font-size: 9.5px; padding: 2.5px 7px; }
+    .site-cta { font-size: 12.5px; padding: 9px 12px; }
+    .secondary-link { font-size: 11px; padding: 7px 10px; }
+    .tips { padding: 18px 20px; border-radius: 14px; }
+    .tips h3 { font-size: 12px; margin-bottom: 10px; }
+    .tip-list li { font-size: 12px; padding: 7px 0; gap: 8px; }
+    footer { font-size: 10.5px; }
+  }
+
+  /* Very small phone (≤380px) */
+  @media (max-width: 380px) {
+    .container { padding: 16px 12px 28px; }
+    .hero { padding: 20px 16px; }
+    .hero h1 { font-size: 21px; }
+    .site-card { padding: 16px 16px 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="nav">
+    <a class="back-link" href="index.html">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Back to map
+    </a>
+    <button class="open-all-btn" id="openAllBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Search 3/4 BHK across all 7 sites
+    </button>
+  </div>
+
+  <div class="popup-notice" id="popupNotice">
+    <b>Popup blocked.</b> Your browser blocked some new tabs. Please allow popups for this page, then click the button again — or just click each site card individually.
+  </div>
+
+  <div class="hero">
+    <span class="hero-eyebrow">Rental search</span>
+    <h1 id="heroTitle">Loading…</h1>
+    <div class="hero-meta" id="heroMeta"></div>
+  </div>
+
+  <h2 class="section-title">See photos of this society</h2>
+  <div class="grid photos-grid" id="photosGrid"></div>
+
+  <h2 class="section-title">Read user reviews <span class="reviews-section-hint">From people who actually lived here</span></h2>
+  <div class="search-explainer reviews-explainer">
+    Reviews from <b id="reviewsExplainerName">this society's</b> residents and tenants — pros, cons, build quality, maintenance, safety, neighborhood. Read across 2–3 sources to triangulate; single-source reviews can be biased.
+  </div>
+  <div class="grid reviews-grid" id="reviewsGrid"></div>
+
+  <h2 class="section-title">3 BHK / 4 BHK rental listings <span class="bhk-filter-pill">3 BHK or 4 BHK only</span></h2>
+  <div class="search-explainer">
+    Each card opens a Google search restricted to that site for <b id="searchExplainerName">this society</b>, <b>filtered to 3 BHK and 4 BHK only</b>. Click any Google result to open the actual listing on that site. Smaller configs (1/2 BHK) are excluded by the query.
+  </div>
+  <div class="grid" id="grid"></div>
+
+  <div class="tips">
+    <h3>Tips before you contact</h3>
+    <ul class="tip-list">
+      <li><span class="tip-emoji">🔍</span><span><b>Cross-verify rent</b> across at least 3 sites. Same flat can be listed at different rates depending on broker vs. owner.</span></li>
+      <li><span class="tip-emoji">🏠</span><span><b>NoBroker</b> is owner-direct (no brokerage fee). <b>MagicBricks</b> & <b>99acres</b> have both broker and owner listings — filter "Owner" to skip brokerage (typically 1 month's rent).</span></li>
+      <li><span class="tip-emoji">📅</span><span><b>Listing age matters</b>. Anything posted &gt;30 days back is likely stale or already rented. Sort by "Newest first" on each site.</span></li>
+      <li><span class="tip-emoji">📸</span><span><b>Check photos + RERA ID</b>. Avoid listings without photos or unverified contact details.</span></li>
+      <li><span class="tip-emoji">💬</span><span><b>Mention "no brokerage"</b> when speaking with owners on NoBroker/99acres to confirm.</span></li>
+      <li><span class="tip-emoji">⚡</span><span><b>For new/upcoming projects</b>, listings will be minimal — check developer/builder website or call the project sales office.</span></li>
+    </ul>
+  </div>
+
+  <footer>
+    Powered by direct search URLs to each platform · Listings update in real-time on each site.
+  </footer>
+</div>
+
+<script>
+const REVIEW_SITES = [
+  {
+    key: 'mbreview',
+    name: 'MagicBricks Reviews',
+    tagline: 'Long-form society reviews',
+    desc: 'In-depth resident reviews with ratings on amenities, maintenance, safety, location, and value. Filterable by recent vs. all-time.',
+    tags: ['Detailed', 'Resident verified', 'Star ratings'],
+    url: (s) => `https://www.google.com/search?q=${encodeURIComponent(`"${s.name}" Noida review site:magicbricks.com`)}`
+  },
+  {
+    key: '99review',
+    name: '99acres Society Reviews',
+    tagline: 'Highest review volume',
+    desc: 'Often has the largest count of resident reviews per society. Categorized ratings (build, location, amenities) and free-text comments.',
+    tags: ['Most reviews', 'Categorized'],
+    url: (s) => `https://www.google.com/search?q=${encodeURIComponent(`"${s.name}" Noida review site:99acres.com`)}`
+  },
+  {
+    key: 'syreview',
+    name: 'SquareYards Reviews',
+    tagline: 'Verified residents only',
+    desc: 'Strong on verified residents-only reviews. Includes developer reputation context and price trend signals.',
+    tags: ['Verified residents', 'Developer info'],
+    url: (s) => `https://www.google.com/search?q=${encodeURIComponent(`"${s.name}" Noida review site:squareyards.com`)}`
+  },
+  {
+    key: 'greviews',
+    name: 'Google Maps Reviews',
+    tagline: 'Public location reviews',
+    desc: 'Star ratings + photos posted by visitors and residents on Google Maps. Best for unsolicited public sentiment.',
+    tags: ['Public', 'Photos', 'Stars'],
+    url: (s) => `https://www.google.com/maps/search/${encodeURIComponent(s.name + ' ' + s.sector + ' Noida')}`
+  },
+  {
+    key: 'nbreview',
+    name: 'NoBroker Reviews',
+    tagline: 'Renter perspective',
+    desc: 'Reviews from people who actually rented in the society — best for understanding tenant experience, landlord behavior, deposits.',
+    tags: ['Renter view', 'Honest'],
+    url: (s) => `https://www.google.com/search?q=${encodeURIComponent(`"${s.name}" Noida review site:nobroker.in`)}`
+  },
+  {
+    key: 'reddit',
+    name: 'Reddit · r/Noida',
+    tagline: 'Unfiltered real-resident takes',
+    desc: 'Honest, unfiltered discussions on r/Noida and r/Indiainvestments. Often catches issues that paid review sites miss.',
+    tags: ['Unfiltered', 'Recent threads', 'Real residents'],
+    url: (s) => `https://www.google.com/search?q=${encodeURIComponent(`"${s.name}" Noida site:reddit.com`)}`
+  }
+];
+
+const PHOTO_SITES = [
+  {
+    key: 'gimages',
+    name: 'Google Images',
+    tagline: 'Most exhaustive · all sources',
+    desc: 'Aggregated photos from builder sites, listing portals, news, and reviews. Best single source for any society.',
+    tags: ['All sources', 'Recent', 'High quality'],
+    url: (s) => `https://www.google.com/search?q=${encodeURIComponent(s.name + ' ' + s.sector + ' Noida')}&tbm=isch`
+  },
+  {
+    key: 'bimages',
+    name: 'Bing Images',
+    tagline: 'Alternative to Google',
+    desc: 'Often surfaces different images than Google. Good for cross-referencing the same society from different angles.',
+    tags: ['Alternative', 'Different mix'],
+    url: (s) => `https://www.bing.com/images/search?q=${encodeURIComponent(s.name + ' ' + s.sector + ' Noida')}`
+  },
+  {
+    key: 'ymaps',
+    name: 'Google Street View',
+    tagline: 'See it in real life',
+    desc: 'Walk around the building exterior, check the streetscape, neighborhood feel, parking situation, and entry gates.',
+    tags: ['360° view', 'Exterior', 'Surroundings'],
+    url: (s) => `https://www.google.com/maps/search/${encodeURIComponent(s.name + ' ' + s.sector + ' Noida')}`
+  }
+];
+
+const SITES = [
+  {
+    key: 'nobroker',
+    name: 'NoBroker',
+    tagline: 'Owner direct · zero brokerage',
+    desc: 'India\'s largest owner-listed rental platform. Save 1 month\'s rent in brokerage. Highly active in Noida.',
+    tags: ['No brokerage', 'Owner-verified', 'Most active'],
+    domain: 'nobroker.in',
+    browseUrl: 'https://www.nobroker.in/property/rent/noida'
+  },
+  {
+    key: 'magicbricks',
+    name: 'MagicBricks',
+    tagline: 'India\'s #1 property portal',
+    desc: 'Largest inventory — both broker and owner listings. Filter by "Owner" to skip brokerage. Great for premium societies.',
+    tags: ['Largest inventory', 'Photos', 'Owner + broker'],
+    domain: 'magicbricks.com',
+    browseUrl: 'https://www.magicbricks.com/property-for-rent-noida'
+  },
+  {
+    key: 'acres99',
+    name: '99acres',
+    tagline: 'Wide inventory · trusted brand',
+    desc: 'Comprehensive listings with filters by floor, facing, furnishing. Many broker-listed but well-maintained data.',
+    tags: ['Detailed filters', 'Photos', 'Map view'],
+    domain: '99acres.com',
+    browseUrl: 'https://www.99acres.com/property-in-noida-ffid'
+  },
+  {
+    key: 'squareyards',
+    name: 'SquareYards',
+    tagline: 'Property data + listings',
+    desc: 'Strong on data — society reviews, price trends, transaction history. Smaller rental inventory but trusted.',
+    tags: ['Society reviews', 'Price trends', 'Verified'],
+    domain: 'squareyards.com',
+    browseUrl: 'https://www.squareyards.com/rental-property-in-noida'
+  },
+  {
+    key: 'housing',
+    name: 'Housing.com',
+    tagline: 'Visual-first listings',
+    desc: 'Clean UI, strong photo galleries, virtual tours on some listings. Owned by REA Group (Australia).',
+    tags: ['Virtual tours', 'Clean UI', 'Photos'],
+    domain: 'housing.com',
+    browseUrl: 'https://housing.com/in/rent/noida'
+  },
+  {
+    key: 'commonfloor',
+    name: 'CommonFloor',
+    tagline: 'Quikr-owned · society-focused',
+    desc: 'Strong on society-level listings and reviews. Smaller inventory but useful for cross-referencing.',
+    tags: ['Society pages', 'Reviews'],
+    domain: 'commonfloor.com',
+    browseUrl: 'https://www.commonfloor.com/listing/in/noida/for-rent'
+  },
+  {
+    key: 'olx',
+    name: 'OLX',
+    tagline: 'Classifieds · direct contact',
+    desc: 'Owner-posted classifieds. Hit-or-miss but occasionally surfaces below-market deals. Always verify in person.',
+    tags: ['Classifieds', 'Owner direct', 'Verify carefully'],
+    domain: 'olx.in',
+    browseUrl: 'https://www.olx.in/items/q-rent-noida'
+  }
+];
+
+function findUrl(site, s) {
+  return `https://www.google.com/search?q=${encodeURIComponent(`"${s.name}" Noida ("3 BHK" OR "4 BHK") rent site:${site.domain}`)}`;
+}
+
+const params = new URLSearchParams(window.location.search);
+const society = {
+  name: params.get('society') || 'Noida Society',
+  sector: params.get('sector') || 'Noida',
+  band: params.get('band') || '',
+  bhk: params.get('bhk') || '',
+  rent: params.get('rent') || '',
+  status: params.get('status') || ''
+};
+
+document.title = `${society.name} — Reviews, Photos & Listings`;
+document.getElementById('heroTitle').textContent = society.name;
+document.getElementById('searchExplainerName').textContent = society.name;
+document.getElementById('reviewsExplainerName').textContent = society.name + "'s";
+
+const metaEl = document.getElementById('heroMeta');
+const metaItems = [];
+if (society.sector) metaItems.push({label: 'Sector', value: society.sector});
+if (society.rent) metaItems.push({label: 'Rent', value: society.rent});
+if (society.bhk) metaItems.push({label: 'Config', value: society.bhk});
+if (society.status === 'new') metaItems.push({label: 'Status', value: 'Newly delivered'});
+if (society.status === 'upcoming') metaItems.push({label: 'Status', value: 'Under construction'});
+metaEl.innerHTML = metaItems.map(m => `<span class="meta-pill">${m.label} <b>${m.value}</b></span>`).join('');
+
+const reviewsGridEl = document.getElementById('reviewsGrid');
+reviewsGridEl.innerHTML = REVIEW_SITES.map(site => `
+  <a class="site-card ${site.key}" href="${site.url(society)}" target="_blank" rel="noopener">
+    <div class="site-logo">${site.name}</div>
+    <div class="site-tagline">${site.tagline}</div>
+    <div class="site-desc">${site.desc}</div>
+    <div class="site-tags">
+      ${site.tags.map(t => `<span class="site-tag">${t}</span>`).join('')}
+    </div>
+    <span class="site-cta">
+      Read reviews
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+    </span>
+  </a>
+`).join('');
+
+const photosGridEl = document.getElementById('photosGrid');
+photosGridEl.innerHTML = PHOTO_SITES.map(site => `
+  <a class="site-card ${site.key}" href="${site.url(society)}" target="_blank" rel="noopener">
+    <div class="site-logo">${site.name}</div>
+    <div class="site-tagline">${site.tagline}</div>
+    <div class="site-desc">${site.desc}</div>
+    <div class="site-tags">
+      ${site.tags.map(t => `<span class="site-tag">${t}</span>`).join('')}
+    </div>
+    <span class="site-cta">
+      View photos
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+    </span>
+  </a>
+`).join('');
+
+const gridEl = document.getElementById('grid');
+gridEl.innerHTML = SITES.map(site => `
+  <div class="site-card ${site.key}">
+    <div class="site-logo">${site.name}</div>
+    <div class="site-tagline">${site.tagline}</div>
+    <div class="site-desc">${site.desc}</div>
+    <div class="site-tags">
+      ${site.tags.map(t => `<span class="site-tag">${t}</span>`).join('')}
+    </div>
+    <a class="site-cta" href="${findUrl(site, society)}" target="_blank" rel="noopener">
+      Find 3/4 BHK listings
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+    </a>
+    <a class="secondary-link" href="${site.browseUrl}" target="_blank" rel="noopener">
+      Or browse all Noida rentals on ${site.name} →
+    </a>
+  </div>
+`).join('');
+
+document.getElementById('openAllBtn').addEventListener('click', () => {
+  let blocked = 0;
+  SITES.forEach((site, i) => {
+    setTimeout(() => {
+      const w = window.open(findUrl(site, society), '_blank');
+      if (!w || w.closed || typeof w.closed === 'undefined') blocked++;
+      if (i === SITES.length - 1 && blocked > 0) {
+        document.getElementById('popupNotice').classList.add('show');
+      }
+    }, i * 80);
+  });
+});
+</script>
+</body>
+</html>
