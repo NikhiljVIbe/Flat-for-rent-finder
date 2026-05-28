@@ -884,8 +884,9 @@
 
   /* ============ Responsive — bottom sheet pattern ============ */
 
-  /* Sheet handle is mobile-only — hidden on desktop */
+  /* Sheet handle + FAB are mobile-only — hidden on desktop */
   .sheet-handle { display: none; }
+  .sheet-fab { display: none; }
 
   /* Tablet + Mobile (≤960px): convert sidebar to bottom sheet */
   @media (max-width: 960px) {
@@ -933,14 +934,14 @@
       transform: translateY(0);
     }
 
-    /* Sheet handle visible on mobile */
+    /* Sheet handle visible on mobile — large tap target */
     .sheet-handle {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
-      padding: 10px 16px 12px;
-      margin: 0 -16px 10px;
+      gap: 8px;
+      padding: 12px 16px 14px;
+      margin: 0 -16px 12px;
       position: sticky;
       top: 0;
       background: var(--surface-solid);
@@ -951,7 +952,11 @@
       width: calc(100% + 32px);
       font-family: inherit;
       border-radius: 22px 22px 0 0;
-      touch-action: none;
+      -webkit-tap-highlight-color: rgba(99, 102, 241, 0.2);
+      min-height: 56px;
+    }
+    .sheet-handle:active {
+      background: var(--bg);
     }
     .sheet-handle-bar {
       width: 44px;
@@ -1007,6 +1012,39 @@
     .leaflet-control-layers {
       padding: 5px 9px !important;
       font-size: 11.5px !important;
+    }
+
+    /* Floating "View list" button — primary affordance on mobile */
+    .sheet-fab {
+      display: inline-flex !important;
+      position: fixed;
+      right: 16px;
+      bottom: 84px;
+      z-index: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 18px;
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45), 0 2px 6px rgba(0,0,0,0.15);
+      cursor: pointer;
+      -webkit-tap-highlight-color: rgba(255,255,255,0.2);
+      transition: transform 0.2s, opacity 0.2s, bottom 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .sheet-fab:active { transform: scale(0.96); }
+    .sheet-fab svg { width: 16px; height: 16px; }
+    body.sheet-half .sheet-fab,
+    body.sheet-expanded .sheet-fab {
+      bottom: -64px;
+      opacity: 0;
+      pointer-events: none;
     }
 
     /* Active-filter chip on map (visible when sheet collapsed) */
@@ -1339,6 +1377,10 @@
     </div>
   </aside>
   <div id="map">
+    <button type="button" class="sheet-fab" id="sheetFab" aria-label="Show society list">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <span id="sheetFabLabel">View list</span>
+    </button>
     <div class="active-filter-chip" id="activeFilterChip">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
       <span id="activeFilterText">All societies</span>
@@ -2276,23 +2318,29 @@ map.fitBounds(allCoords, { padding: [60, 60] });
   const handleEl = document.getElementById('sheetHandle');
   const hintEl = document.getElementById('sheetHint');
   const countEl = document.getElementById('sheetCount');
-  const filterChip = document.getElementById('activeFilterChip');
+  const fabEl = document.getElementById('sheetFab');
+  const fabLabel = document.getElementById('sheetFabLabel');
   const filterText = document.getElementById('activeFilterText');
+  console.log('[sheet] setup', { sidebarEl: !!sidebarEl, handleEl: !!handleEl, fabEl: !!fabEl });
   if (!sidebarEl || !handleEl) return;
 
   const STATES = ['collapsed', 'half', 'expanded'];
   let state = 'collapsed';
 
   function applyState(next) {
+    if (!STATES.includes(next)) return;
     state = next;
     sidebarEl.classList.remove('sheet-collapsed', 'sheet-half', 'sheet-expanded');
     sidebarEl.classList.add('sheet-' + next);
     document.body.classList.remove('sheet-collapsed', 'sheet-half', 'sheet-expanded');
     document.body.classList.add('sheet-' + next);
-    if (next === 'collapsed') hintEl.textContent = 'Tap to view list';
-    else if (next === 'half') hintEl.textContent = 'Tap for full view';
-    else hintEl.textContent = 'Tap to minimize';
-    if (next === 'expanded') sidebarEl.scrollTop = 0;
+    if (hintEl) {
+      if (next === 'collapsed') hintEl.textContent = 'Tap to view list';
+      else if (next === 'half') hintEl.textContent = 'Tap for full view';
+      else hintEl.textContent = 'Tap to minimize';
+    }
+    if (next === 'expanded' && sidebarEl) sidebarEl.scrollTop = 0;
+    console.log('[sheet] state →', next);
   }
 
   function cycle() {
@@ -2300,55 +2348,77 @@ map.fitBounds(allCoords, { padding: [60, 60] });
     applyState(STATES[(idx + 1) % STATES.length]);
   }
 
-  handleEl.addEventListener('click', cycle);
+  // Tap handle to cycle
+  handleEl.addEventListener('click', (e) => { e.preventDefault(); cycle(); });
   handleEl.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cycle(); }
   });
 
-  // Drag-to-resize (touch only — preserves desktop click behavior)
+  // FAB → open to half (primary affordance)
+  if (fabEl) {
+    fabEl.addEventListener('click', (e) => {
+      e.preventDefault();
+      applyState('half');
+    });
+  }
+
+  // Pointer-based drag (works for both mouse + touch)
   let dragStartY = null, dragStartState = null, dragged = false;
-  handleEl.addEventListener('touchstart', (e) => {
-    dragStartY = e.touches[0].clientY;
+  handleEl.addEventListener('pointerdown', (e) => {
+    dragStartY = e.clientY;
     dragStartState = state;
     dragged = false;
-  }, { passive: true });
-  handleEl.addEventListener('touchmove', (e) => {
+    handleEl.setPointerCapture(e.pointerId);
+  });
+  handleEl.addEventListener('pointermove', (e) => {
     if (dragStartY === null) return;
-    const dy = e.touches[0].clientY - dragStartY;
-    if (Math.abs(dy) > 12) dragged = true;
-  }, { passive: true });
-  handleEl.addEventListener('touchend', (e) => {
+    if (Math.abs(e.clientY - dragStartY) > 12) dragged = true;
+  });
+  handleEl.addEventListener('pointerup', (e) => {
     if (dragStartY === null) return;
-    const dy = (e.changedTouches[0].clientY) - dragStartY;
+    const dy = e.clientY - dragStartY;
+    const wasDragged = dragged;
     dragStartY = null;
-    if (!dragged) return; // let click fire
-    // Drag intent: up = expand, down = collapse
+    dragged = false;
+    if (!wasDragged) return; // let click fire
+    // Drag triggered: up = expand, down = collapse
     const idx = STATES.indexOf(dragStartState);
-    if (dy < -40 && idx < 2) {
-      applyState(STATES[idx + 1]);
-      e.preventDefault();
-    } else if (dy > 40 && idx > 0) {
-      applyState(STATES[idx - 1]);
-      e.preventDefault();
+    if (dy < -40 && idx < 2) applyState(STATES[idx + 1]);
+    else if (dy > 40 && idx > 0) applyState(STATES[idx - 1]);
+  });
+
+  // Initial state — start collapsed
+  applyState('collapsed');
+
+  // Click on map (outside sidebar) collapses the sheet
+  document.getElementById('map').addEventListener('click', (e) => {
+    if (window.matchMedia('(max-width: 960px)').matches && state !== 'collapsed') {
+      // Only collapse if click was on the map area itself, not bubbled from popup
+      if (e.target.closest('.leaflet-popup') || e.target.closest('#sidebar')) return;
+      applyState('collapsed');
     }
   });
 
-  // Initial state — start collapsed on mobile
-  if (window.matchMedia('(max-width: 960px)').matches) {
-    applyState('collapsed');
-  }
-
-  // When a marker is clicked (popup opens), collapse the sheet so popup is fully visible
+  // Popup open → auto-collapse sheet so popup is visible
   map.on('popupopen', () => {
     if (window.matchMedia('(max-width: 960px)').matches && state !== 'collapsed') {
       applyState('collapsed');
     }
   });
 
-  // Listen for filter changes and update sheet count + active filter chip
+  // Card click → collapse sheet (so user sees the map zoom)
+  sidebarEl.addEventListener('click', (e) => {
+    if (!window.matchMedia('(max-width: 960px)').matches) return;
+    if (e.target.closest('.society-card')) {
+      setTimeout(() => applyState('collapsed'), 280);
+    }
+  });
+
+  // Listen for filter changes and update sheet count + filter chip
   window.addEventListener('societiesRendered', (e) => {
     const d = e.detail;
     if (countEl) countEl.textContent = d.count + (d.count === 1 ? ' society' : ' societies');
+    if (fabLabel) fabLabel.textContent = 'View list (' + d.count + ')';
     const parts = [];
     if (d.band !== 'all') parts.push(d.band[0].toUpperCase() + d.band.slice(1));
     if (d.area !== 'all') {
@@ -2361,8 +2431,7 @@ map.fitBounds(allCoords, { padding: [60, 60] });
     if (filterText) filterText.textContent = desc;
   });
 
-  // Fire once on load (renderList was already called above)
-  // Trigger by re-calling renderList — it'll dispatch the event
+  // Fire renderList to populate initial chip/count via the event
   renderList();
 })();
 </script>
