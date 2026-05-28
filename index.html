@@ -882,21 +882,111 @@
   }
   .reset-btn:hover { background: var(--brand-soft); color: var(--brand-deep); border-color: var(--brand); }
 
-  /* ============ Responsive ============ */
+  /* ============ Responsive — bottom sheet pattern ============ */
 
-  /* Tablet (≤960px): stack map + sidebar */
+  /* Sheet handle is mobile-only — hidden on desktop */
+  .sheet-handle { display: none; }
+
+  /* Tablet + Mobile (≤960px): convert sidebar to bottom sheet */
   @media (max-width: 960px) {
     #app {
-      grid-template-columns: 1fr;
-      grid-template-rows: 55vh 45vh;
+      display: block;
+      position: relative;
+      height: 100vh;
+      overflow: hidden;
     }
-    #map { height: 55vh; }
+    #map {
+      position: fixed;
+      inset: 0;
+      height: 100vh;
+      width: 100vw;
+      z-index: 0;
+    }
     #sidebar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      top: auto;
+      height: 92vh;
+      max-height: 92vh;
+      width: 100%;
       border-right: none;
-      border-top: 1px solid var(--border);
-      padding: 16px;
-      height: 45vh;
+      border-top: none;
+      border-radius: 22px 22px 0 0;
+      box-shadow: 0 -10px 40px rgba(15, 23, 42, 0.18), 0 -2px 8px rgba(15, 23, 42, 0.06);
+      background: var(--surface-solid);
+      backdrop-filter: none;
+      transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+      transform: translateY(calc(92vh - 68px)); /* collapsed: only handle visible */
+      z-index: 500;
+      padding: 0 16px 24px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
     }
+    #sidebar.sheet-half {
+      transform: translateY(50vh);
+    }
+    #sidebar.sheet-expanded {
+      transform: translateY(0);
+    }
+
+    /* Sheet handle visible on mobile */
+    .sheet-handle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px 12px;
+      margin: 0 -16px 10px;
+      position: sticky;
+      top: 0;
+      background: var(--surface-solid);
+      z-index: 5;
+      cursor: pointer;
+      user-select: none;
+      border: none;
+      width: calc(100% + 32px);
+      font-family: inherit;
+      border-radius: 22px 22px 0 0;
+      touch-action: none;
+    }
+    .sheet-handle-bar {
+      width: 44px;
+      height: 5px;
+      border-radius: 3px;
+      background: rgba(15, 23, 42, 0.22);
+      transition: background 0.15s, width 0.15s;
+    }
+    .sheet-handle:hover .sheet-handle-bar,
+    .sheet-handle:active .sheet-handle-bar {
+      background: var(--brand);
+      width: 56px;
+    }
+    .sheet-summary {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      font-size: 12.5px;
+      color: var(--ink-soft);
+      font-weight: 500;
+    }
+    #sheetCount {
+      font-weight: 700;
+      color: var(--ink);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+    }
+    .sheet-divider { color: var(--ink-muted); }
+    .sheet-hint {
+      font-size: 11.5px;
+      color: var(--brand-deep);
+      font-weight: 600;
+    }
+
+    /* Tighten sidebar elements when sheet visible */
     .header { margin-bottom: 14px; }
     h1 { font-size: 19px; }
     .header-sub { font-size: 12px; }
@@ -906,6 +996,147 @@
     .controls { padding: 11px; margin-bottom: 12px; }
     .society-card { padding: 12px; gap: 11px; }
     .card-thumb { width: 52px; height: 52px; }
+
+    /* Map controls: tighter on mobile, account for sheet */
+    .leaflet-control-zoom { display: none !important; } /* pinch-zoom is enough on mobile */
+    .reset-btn {
+      top: 12px; right: 12px;
+      padding: 7px 12px;
+      font-size: 12px;
+    }
+    .leaflet-control-layers {
+      padding: 5px 9px !important;
+      font-size: 11.5px !important;
+    }
+
+    /* Active-filter chip on map (visible when sheet collapsed) */
+    .active-filter-chip {
+      position: fixed;
+      top: 12px; left: 12px;
+      z-index: 400;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 12px;
+      background: var(--surface-solid);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--ink);
+      box-shadow: var(--shadow-md);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    body.sheet-collapsed .active-filter-chip {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Phone (≤640px): tighten elements inside sheet */
+  @media (max-width: 640px) {
+    body::before, body::after { display: none; }
+    .header { margin-bottom: 10px; }
+    h1 { font-size: 17px; line-height: 1.2; }
+    .header-sub { font-size: 11.5px; }
+    .header-eyebrow { font-size: 10px; padding: 4px 9px; margin-bottom: 8px; }
+    .stats { gap: 5px; margin-bottom: 10px; }
+    .stat { padding: 7px 9px; }
+    .stat-label { font-size: 9px; }
+    .stat-value { font-size: 13px; }
+    .legend { gap: 4px; margin-bottom: 10px; }
+    .legend-item { font-size: 10px; padding: 4px 8px; }
+    .controls { padding: 10px; margin-bottom: 12px; }
+    .control-row { margin-bottom: 8px; }
+    .control-label { font-size: 9.5px; margin-bottom: 5px; }
+    .pill-row { gap: 3px; }
+    .pill { font-size: 10.5px; padding: 4px 9px; }
+    select.sort-select { font-size: 11.5px; padding: 7px 11px; }
+    .list-header { margin-bottom: 8px; }
+    .list-title { font-size: 12px; }
+    .list-count { font-size: 10px; }
+    .society-card { padding: 10px; gap: 10px; margin-bottom: 8px; }
+    .card-thumb { width: 48px; height: 48px; border-radius: 9px; }
+    .card-thumb-letter { font-size: 18px; }
+    .card-rating { width: 20px; height: 20px; font-size: 9px; top: 3px; right: 3px; }
+    .card-title { font-size: 13px; }
+    .card-sector { font-size: 10px; }
+    .price-tag { font-size: 9.5px; padding: 2px 6px; }
+    .card-meta { font-size: 10px; gap: 7px; flex-wrap: wrap; }
+    .card-meta b { font-size: 10px; }
+    .card-bhk { font-size: 9px; padding: 2px 5px; }
+    .card-listings-link { font-size: 10px; padding: 2px 6px; }
+    .footer { font-size: 9.5px; }
+
+    /* Office marker smaller */
+    .office-marker { font-size: 11px; padding: 6px 11px; }
+    .office-icon { width: 12px; height: 12px; }
+    .society-marker { width: 18px; height: 18px; border-width: 2.5px; }
+    .society-marker.active { transform: scale(1.3); }
+
+    /* Popup adjusts on mobile */
+    .leaflet-popup-content {
+      margin: 12px 14px !important;
+      max-height: 55vh !important;
+    }
+    .popup-card { min-width: 200px; font-size: 11.5px; }
+    .popup-image-wrap { height: 85px; margin: -12px -14px 10px; }
+    .popup-image-letter { font-size: 30px; }
+    .popup-title { font-size: 13.5px; }
+    .popup-sector { font-size: 10.5px; }
+    .popup-row { font-size: 11px; padding: 5px 0; }
+    .popup-notes { font-size: 10.5px; }
+    .popup-rating { padding: 9px 11px; }
+    .popup-rating-circle { width: 36px; height: 36px; font-size: 14px; }
+    .popup-rating-label { font-size: 9px; }
+    .popup-rating-desc { font-size: 11px; }
+    .popup-rating-bar { font-size: 10px; grid-template-columns: 66px 1fr 18px; }
+    a.listings-cta, a.listings-cta:link { font-size: 12px; padding: 10px 12px; }
+    .listings-cta-sub { font-size: 9.5px; }
+  }
+
+  /* Very small phone (≤380px) */
+  @media (max-width: 380px) {
+    .stats { grid-template-columns: 1fr 1fr; }
+    .stats .stat:nth-child(3) { grid-column: 1 / -1; }
+    .pill { font-size: 10px; padding: 3px 8px; }
+    .header-eyebrow { font-size: 9.5px; }
+    h1 { font-size: 16px; }
+  }
+
+  /* Landscape phone — side-by-side override (sheet doesn't work in short height) */
+  @media (max-width: 960px) and (orientation: landscape) and (max-height: 500px) {
+    #app {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      grid-template-rows: 100vh;
+      overflow: visible;
+    }
+    #map {
+      position: relative;
+      inset: auto;
+      height: 100vh;
+      width: auto;
+    }
+    #sidebar {
+      position: relative;
+      inset: auto;
+      top: auto;
+      bottom: auto;
+      height: 100vh;
+      max-height: 100vh;
+      width: auto;
+      transform: none !important;
+      border-radius: 0;
+      border-left: 1px solid var(--border);
+      box-shadow: none;
+      padding: 14px;
+    }
+    .sheet-handle { display: none; }
+    .leaflet-control-zoom { display: block !important; }
   }
 
   /* Phone (≤640px): tighten everything */
@@ -1007,6 +1238,14 @@
 <body>
 <div id="app">
   <aside id="sidebar">
+    <button type="button" class="sheet-handle" id="sheetHandle" aria-label="Expand or collapse list">
+      <span class="sheet-handle-bar"></span>
+      <div class="sheet-summary">
+        <span id="sheetCount">— societies</span>
+        <span class="sheet-divider">·</span>
+        <span class="sheet-hint" id="sheetHint">Tap to view list</span>
+      </div>
+    </button>
     <div class="header">
       <span class="header-eyebrow">Live · Noida</span>
       <h1>Find your next home</h1>
@@ -1100,6 +1339,10 @@
     </div>
   </aside>
   <div id="map">
+    <div class="active-filter-chip" id="activeFilterChip">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
+      <span id="activeFilterText">All societies</span>
+    </div>
     <button class="reset-btn" id="resetBtn" title="Reset map view">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
       Reset view
@@ -1962,6 +2205,11 @@ function renderList() {
     if (visible) markers[s.name].addTo(map);
     else map.removeLayer(markers[s.name]);
   });
+
+  // Notify sheet UI of filter changes
+  window.dispatchEvent(new CustomEvent('societiesRendered', { detail: {
+    count: items.length, band: currentBand, area: currentArea, status: currentStatus, minRating: currentMinRating
+  }}));
 }
 
 // Pill handlers
@@ -2021,6 +2269,102 @@ document.getElementById('resetBtn').addEventListener('click', () => {
 renderList();
 const allCoords = [[OFFICE.lat, OFFICE.lng], ...SOCIETIES.map(s => [s.lat, s.lng])];
 map.fitBounds(allCoords, { padding: [60, 60] });
+
+// ============== Mobile bottom-sheet behavior ==============
+(function setupBottomSheet() {
+  const sidebarEl = document.getElementById('sidebar');
+  const handleEl = document.getElementById('sheetHandle');
+  const hintEl = document.getElementById('sheetHint');
+  const countEl = document.getElementById('sheetCount');
+  const filterChip = document.getElementById('activeFilterChip');
+  const filterText = document.getElementById('activeFilterText');
+  if (!sidebarEl || !handleEl) return;
+
+  const STATES = ['collapsed', 'half', 'expanded'];
+  let state = 'collapsed';
+
+  function applyState(next) {
+    state = next;
+    sidebarEl.classList.remove('sheet-collapsed', 'sheet-half', 'sheet-expanded');
+    sidebarEl.classList.add('sheet-' + next);
+    document.body.classList.remove('sheet-collapsed', 'sheet-half', 'sheet-expanded');
+    document.body.classList.add('sheet-' + next);
+    if (next === 'collapsed') hintEl.textContent = 'Tap to view list';
+    else if (next === 'half') hintEl.textContent = 'Tap for full view';
+    else hintEl.textContent = 'Tap to minimize';
+    if (next === 'expanded') sidebarEl.scrollTop = 0;
+  }
+
+  function cycle() {
+    const idx = STATES.indexOf(state);
+    applyState(STATES[(idx + 1) % STATES.length]);
+  }
+
+  handleEl.addEventListener('click', cycle);
+  handleEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cycle(); }
+  });
+
+  // Drag-to-resize (touch only — preserves desktop click behavior)
+  let dragStartY = null, dragStartState = null, dragged = false;
+  handleEl.addEventListener('touchstart', (e) => {
+    dragStartY = e.touches[0].clientY;
+    dragStartState = state;
+    dragged = false;
+  }, { passive: true });
+  handleEl.addEventListener('touchmove', (e) => {
+    if (dragStartY === null) return;
+    const dy = e.touches[0].clientY - dragStartY;
+    if (Math.abs(dy) > 12) dragged = true;
+  }, { passive: true });
+  handleEl.addEventListener('touchend', (e) => {
+    if (dragStartY === null) return;
+    const dy = (e.changedTouches[0].clientY) - dragStartY;
+    dragStartY = null;
+    if (!dragged) return; // let click fire
+    // Drag intent: up = expand, down = collapse
+    const idx = STATES.indexOf(dragStartState);
+    if (dy < -40 && idx < 2) {
+      applyState(STATES[idx + 1]);
+      e.preventDefault();
+    } else if (dy > 40 && idx > 0) {
+      applyState(STATES[idx - 1]);
+      e.preventDefault();
+    }
+  });
+
+  // Initial state — start collapsed on mobile
+  if (window.matchMedia('(max-width: 960px)').matches) {
+    applyState('collapsed');
+  }
+
+  // When a marker is clicked (popup opens), collapse the sheet so popup is fully visible
+  map.on('popupopen', () => {
+    if (window.matchMedia('(max-width: 960px)').matches && state !== 'collapsed') {
+      applyState('collapsed');
+    }
+  });
+
+  // Listen for filter changes and update sheet count + active filter chip
+  window.addEventListener('societiesRendered', (e) => {
+    const d = e.detail;
+    if (countEl) countEl.textContent = d.count + (d.count === 1 ? ' society' : ' societies');
+    const parts = [];
+    if (d.band !== 'all') parts.push(d.band[0].toUpperCase() + d.band.slice(1));
+    if (d.area !== 'all') {
+      const areaLabels = { sec128: 'Sec 128', sec7x: 'Sec 75–78', expressway: 'Expressway', central: 'Central' };
+      parts.push(areaLabels[d.area] || d.area);
+    }
+    if (d.status !== 'all') parts.push(d.status[0].toUpperCase() + d.status.slice(1));
+    if (d.minRating > 0) parts.push('★' + d.minRating + '+');
+    const desc = parts.length ? parts.join(' · ') + ` · ${d.count}` : `All ${d.count} societies`;
+    if (filterText) filterText.textContent = desc;
+  });
+
+  // Fire once on load (renderList was already called above)
+  // Trigger by re-calling renderList — it'll dispatch the event
+  renderList();
+})();
 </script>
 </body>
 </html>
