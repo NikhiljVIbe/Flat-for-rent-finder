@@ -1020,7 +1020,7 @@
       position: fixed;
       right: 16px;
       bottom: 84px;
-      z-index: 600;
+      z-index: 2000;
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -1376,11 +1376,11 @@
       <a href="https://housing.com" target="_blank">Housing.com</a>
     </div>
   </aside>
+  <button type="button" class="sheet-fab" id="sheetFab" aria-label="Show society list">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    <span id="sheetFabLabel">View list</span>
+  </button>
   <div id="map">
-    <button type="button" class="sheet-fab" id="sheetFab" aria-label="Show society list">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-      <span id="sheetFabLabel">View list</span>
-    </button>
     <div class="active-filter-chip" id="activeFilterChip">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
       <span id="activeFilterText">All societies</span>
@@ -2358,6 +2358,8 @@ map.fitBounds(allCoords, { padding: [60, 60] });
   if (fabEl) {
     fabEl.addEventListener('click', (e) => {
       e.preventDefault();
+      e.stopPropagation();
+      console.log('[sheet] FAB clicked');
       applyState('half');
     });
   }
