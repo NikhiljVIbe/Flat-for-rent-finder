@@ -750,6 +750,201 @@
     text-align: right;
   }
 
+  /* AQI section in popup */
+  .popup-aqi {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: linear-gradient(135deg, #fafaf9 0%, #f5f5f4 100%);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .popup-aqi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .popup-aqi-label {
+    font-size: 10px;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .aqi-live-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 5px;
+    border-radius: 3px;
+    background: #10b981;
+    color: #fff;
+    letter-spacing: 0.06em;
+  }
+  .aqi-live-tag::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #fff;
+    animation: aqiPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes aqiPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+  .aqi-typical-tag {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 3px;
+    background: rgba(15, 23, 42, 0.08);
+    color: var(--ink-soft);
+    letter-spacing: 0.04em;
+  }
+  .popup-aqi-body {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .popup-aqi-value {
+    width: 48px; height: 48px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.04em;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    flex-shrink: 0;
+  }
+  .popup-aqi-cat {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 2px;
+  }
+  .popup-aqi-station {
+    font-size: 10.5px;
+    color: var(--ink-muted);
+    line-height: 1.3;
+  }
+
+  /* AQI station markers on the map */
+  .aqi-station-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px; height: 38px;
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: -0.03em;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    position: relative;
+  }
+  .aqi-station-marker::after {
+    content: 'AQI';
+    position: absolute;
+    top: -8px; right: -8px;
+    background: #fff;
+    color: var(--ink);
+    font-size: 7.5px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.1);
+    letter-spacing: 0.04em;
+  }
+
+  /* AQI legend at bottom-left of map */
+  .aqi-legend {
+    position: absolute;
+    bottom: 24px;
+    left: 16px;
+    z-index: 500;
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    box-shadow: var(--shadow-md);
+    font-family: 'Inter', sans-serif;
+    font-size: 10.5px;
+    min-width: 180px;
+    transition: opacity 0.25s, transform 0.25s;
+  }
+  /* On mobile when sheet is open, hide legend to keep map clean */
+  @media (max-width: 960px) {
+    .aqi-legend {
+      bottom: 88px;
+      min-width: 160px;
+      padding: 8px 10px;
+    }
+    body.sheet-half .aqi-legend,
+    body.sheet-expanded .aqi-legend {
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+    }
+  }
+  .aqi-legend-title {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 9.5px;
+    color: var(--ink-muted);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .aqi-legend-toggle {
+    font-size: 9.5px;
+    font-weight: 600;
+    color: var(--brand-deep);
+    cursor: pointer;
+    text-decoration: underline;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .aqi-legend-rows {
+    display: grid;
+    gap: 4px;
+  }
+  .aqi-legend-row {
+    display: grid;
+    grid-template-columns: 14px 1fr auto;
+    gap: 6px;
+    align-items: center;
+    font-size: 10.5px;
+    color: var(--ink-soft);
+  }
+  .aqi-legend-swatch {
+    width: 12px; height: 12px;
+    border-radius: 3px;
+  }
+  .aqi-legend-range {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    color: var(--ink-muted);
+  }
+  body.aqi-hidden .aqi-legend-rows { display: none; }
+  body.aqi-hidden .aqi-station-marker { display: none; }
+
   /* Status badge */
   .status-badge {
     display: inline-flex;
@@ -1374,6 +1569,20 @@
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
       <span id="activeFilterText">All societies</span>
     </div>
+    <div class="aqi-legend" id="aqiLegend">
+      <div class="aqi-legend-title">
+        <span>Air quality (AQI)</span>
+        <button type="button" class="aqi-legend-toggle" id="aqiToggle">Hide</button>
+      </div>
+      <div class="aqi-legend-rows">
+        <div class="aqi-legend-row"><span class="aqi-legend-swatch" style="background:#10b981"></span><span>Good</span><span class="aqi-legend-range">0–50</span></div>
+        <div class="aqi-legend-row"><span class="aqi-legend-swatch" style="background:#84cc16"></span><span>Satisfactory</span><span class="aqi-legend-range">51–100</span></div>
+        <div class="aqi-legend-row"><span class="aqi-legend-swatch" style="background:#f59e0b"></span><span>Moderate</span><span class="aqi-legend-range">101–200</span></div>
+        <div class="aqi-legend-row"><span class="aqi-legend-swatch" style="background:#f97316"></span><span>Poor</span><span class="aqi-legend-range">201–300</span></div>
+        <div class="aqi-legend-row"><span class="aqi-legend-swatch" style="background:#dc2626"></span><span>Very Poor</span><span class="aqi-legend-range">301–400</span></div>
+        <div class="aqi-legend-row"><span class="aqi-legend-swatch" style="background:#7e1d1d"></span><span>Severe</span><span class="aqi-legend-range">400+</span></div>
+      </div>
+    </div>
     <button class="reset-btn" id="resetBtn" title="Reset map view">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
       Reset view
@@ -1811,6 +2020,74 @@ function ratingColor(score) {
   return '#ef4444';
 }
 
+// =============== AIR QUALITY (AQI) ===============
+// CPCB monitoring stations in Noida + Greater Noida.
+// `fallbackAqi` = recent annual-average AQI used if live fetch fails.
+// Live data is fetched from AQICN's public API (no key required for `demo`,
+// but get a free token at https://aqicn.org/data-platform/token for higher
+// rate limits and reliability).
+const AQICN_TOKEN = 'demo';
+const AQI_STATIONS = [
+  { name: "Sector 1, Noida",            lat: 28.5836, lng: 77.3158, fallbackAqi: 180 },
+  { name: "Sector 62, Noida",           lat: 28.6276, lng: 77.3658, fallbackAqi: 195 },
+  { name: "Sector 116, Noida",          lat: 28.5683, lng: 77.3947, fallbackAqi: 185 },
+  { name: "Sector 125, Noida",          lat: 28.5450, lng: 77.3870, fallbackAqi: 170 },
+  { name: "Knowledge Park III, Gr Noida", lat: 28.4737, lng: 77.4853, fallbackAqi: 175 },
+  { name: "Knowledge Park V, Gr Noida",   lat: 28.4773, lng: 77.4824, fallbackAqi: 178 }
+];
+// Each station starts at fallback; live values fill in once fetch resolves
+AQI_STATIONS.forEach(s => { s.aqi = s.fallbackAqi; s.live = false; });
+
+function aqiCategory(aqi) {
+  if (aqi <= 50)  return { label: 'Good',       short: 'Good',  color: '#10b981', text: '#fff' };
+  if (aqi <= 100) return { label: 'Satisfactory', short: 'OK',   color: '#84cc16', text: '#fff' };
+  if (aqi <= 200) return { label: 'Moderate',   short: 'Mod',   color: '#f59e0b', text: '#fff' };
+  if (aqi <= 300) return { label: 'Poor',       short: 'Poor',  color: '#f97316', text: '#fff' };
+  if (aqi <= 400) return { label: 'Very Poor',  short: 'VPoor', color: '#dc2626', text: '#fff' };
+  return              { label: 'Severe',     short: 'Sev',   color: '#7e1d1d', text: '#fff' };
+}
+
+function nearestAqiStation(lat, lng) {
+  let best = null, bestD = Infinity;
+  for (const s of AQI_STATIONS) {
+    const d = haversine(lat, lng, s.lat, s.lng);
+    if (d < bestD) { bestD = d; best = s; }
+  }
+  return { station: best, distKm: bestD };
+}
+
+async function fetchLiveAQI(station) {
+  try {
+    const r = await fetch(`https://api.waqi.info/feed/geo:${station.lat};${station.lng}/?token=${AQICN_TOKEN}`);
+    const j = await r.json();
+    if (j && j.status === 'ok' && j.data && typeof j.data.aqi === 'number') {
+      station.aqi = j.data.aqi;
+      station.live = true;
+      if (j.data.city && j.data.city.name) station.stationName = j.data.city.name;
+      return j.data.aqi;
+    }
+  } catch (e) { /* silent: fall back to typical value */ }
+  return null;
+}
+
+function aqiSectionHTML(soc) {
+  const { station, distKm } = nearestAqiStation(soc.lat, soc.lng);
+  const cat = aqiCategory(station.aqi);
+  const tag = station.live ? '<span class="aqi-live-tag">LIVE</span>' : '<span class="aqi-typical-tag">typical</span>';
+  return `<div class="popup-aqi" data-station="${station.name}">
+    <div class="popup-aqi-header">
+      <span class="popup-aqi-label">Air quality ${tag}</span>
+    </div>
+    <div class="popup-aqi-body">
+      <div class="popup-aqi-value" style="background:${cat.color}">${station.aqi}</div>
+      <div class="popup-aqi-meta">
+        <div class="popup-aqi-cat" style="color:${cat.color}">${cat.label}</div>
+        <div class="popup-aqi-station">Nearest station: ${station.name} (${distKm.toFixed(1)} km)</div>
+      </div>
+    </div>
+  </div>`;
+}
+
 // =============== MAP ===============
 const map = L.map('map', { zoomControl: false }).setView([OFFICE.lat, OFFICE.lng], 13);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -2046,6 +2323,7 @@ function buildPopupHTML(soc, route) {
     ${routeRows}
     <div class="popup-notes">${soc.notes}</div>
     ${ratingSectionHTML(soc, distKm)}
+    ${aqiSectionHTML(soc)}
     ${listingsCTA(soc)}
   </div>`;
 }
@@ -2126,6 +2404,80 @@ SOCIETIES.forEach(soc => {
   m.on('click', () => selectSociety(soc));
   markers[soc.name] = m;
 });
+
+// =============== AQI STATION MARKERS ===============
+const aqiMarkers = {};
+function makeAqiIcon(station) {
+  const cat = aqiCategory(station.aqi);
+  return L.divIcon({
+    className: '',
+    html: `<div class="aqi-station-marker" style="background:${cat.color}">${station.aqi}</div>`,
+    iconSize: [38, 38],
+    iconAnchor: [19, 19]
+  });
+}
+function refreshAqiMarker(station) {
+  if (aqiMarkers[station.name]) {
+    aqiMarkers[station.name].setIcon(makeAqiIcon(station));
+    const cat = aqiCategory(station.aqi);
+    aqiMarkers[station.name].setPopupContent(
+      `<div class="popup-card" style="min-width:200px">
+        <div class="popup-title">${station.name}</div>
+        <div class="popup-sector">CPCB monitoring station</div>
+        <div class="popup-aqi-body" style="margin-top:8px">
+          <div class="popup-aqi-value" style="background:${cat.color}">${station.aqi}</div>
+          <div class="popup-aqi-meta">
+            <div class="popup-aqi-cat" style="color:${cat.color}">${cat.label}</div>
+            <div class="popup-aqi-station">${station.live ? 'Live · via AQICN' : 'Typical annual avg'}</div>
+          </div>
+        </div>
+        <div class="popup-notes" style="margin-top:8px">
+          <a href="https://aqicn.org/city/india/noida/" target="_blank" rel="noopener" style="color:var(--brand-deep);font-weight:600;text-decoration:none">View live AQI on aqicn.org →</a>
+        </div>
+      </div>`
+    );
+  }
+}
+AQI_STATIONS.forEach(station => {
+  const m = L.marker([station.lat, station.lng], { icon: makeAqiIcon(station), zIndexOffset: 500 }).addTo(map);
+  const cat = aqiCategory(station.aqi);
+  m.bindPopup(
+    `<div class="popup-card" style="min-width:200px">
+      <div class="popup-title">${station.name}</div>
+      <div class="popup-sector">CPCB monitoring station</div>
+    </div>`,
+    { maxWidth: 260 }
+  );
+  aqiMarkers[station.name] = m;
+  refreshAqiMarker(station);
+});
+
+// Toggle AQI overlay
+const aqiToggle = document.getElementById('aqiToggle');
+let aqiVisible = true;
+function setAqiVisible(visible) {
+  aqiVisible = visible;
+  document.body.classList.toggle('aqi-hidden', !visible);
+  AQI_STATIONS.forEach(s => {
+    if (visible) aqiMarkers[s.name].addTo(map);
+    else map.removeLayer(aqiMarkers[s.name]);
+  });
+  if (aqiToggle) aqiToggle.textContent = visible ? 'Hide' : 'Show';
+}
+if (aqiToggle) {
+  aqiToggle.addEventListener('click', (e) => { e.stopPropagation(); setAqiVisible(!aqiVisible); });
+}
+
+// Fetch live AQI for each station in parallel; update markers as responses come in
+(async function loadLiveAQI() {
+  await Promise.all(AQI_STATIONS.map(async (station) => {
+    const result = await fetchLiveAQI(station);
+    if (result !== null) {
+      refreshAqiMarker(station);
+      console.log(`[aqi] ${station.name}: ${station.aqi} (live)`);
+    }
+  }));
+})();
 
 // =============== SIDEBAR ===============
 const listEl = document.getElementById('list');
