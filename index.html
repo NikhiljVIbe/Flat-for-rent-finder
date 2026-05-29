@@ -1186,12 +1186,9 @@
     .leaflet-control-zoom { display: block !important; }
   }
 
-  /* Phone (≤640px): tighten everything */
+  /* Phone (≤640px): tighten elements (layout already handled by ≤960px sheet rules) */
   @media (max-width: 640px) {
     body::before, body::after { display: none; }
-    #app { grid-template-rows: 52vh 48vh; }
-    #map { height: 52vh; }
-    #sidebar { padding: 12px; height: 48vh; }
     .header { margin-bottom: 10px; }
     h1 { font-size: 17px; line-height: 1.2; }
     .header-sub { font-size: 11.5px; }
@@ -1267,19 +1264,6 @@
     h1 { font-size: 16px; }
   }
 
-  /* Landscape phone — keep sidebar narrow on the right */
-  @media (max-width: 900px) and (orientation: landscape) and (min-height: 380px) {
-    #app {
-      grid-template-columns: 1fr 320px;
-      grid-template-rows: 100vh;
-    }
-    #map { height: 100vh; }
-    #sidebar {
-      height: 100vh;
-      border-top: none;
-      border-left: 1px solid var(--border);
-    }
-  }
 </style>
 </head>
 <body>
