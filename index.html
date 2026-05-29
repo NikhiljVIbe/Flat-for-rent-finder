@@ -1936,7 +1936,18 @@ const SOCIETIES = [
     notes: "Exotica Housing. Themed landscaping, good amenities. Family-popular Sec 75 address." },
   { name: "Sam Palms (Samridhi Grand Avenue)", sector: "Sector 75", area: "sec7x",
     lat: 28.5825, lng: 77.3740, band: "mid", rent: "₹28k–42k", bhk: "2/3 BHK", status: "ready",
-    notes: "Budget-mid option in Sec 75 cluster. Functional, decent value for the location." }
+    notes: "Budget-mid option in Sec 75 cluster. Functional, decent value for the location." },
+
+  // ===== ADDED: DASNAC ultra-luxury (Sector 75) + EL Cleo (Sector 121) =====
+  { name: "DASNAC The Jewel of Noida", sector: "Sector 75", area: "sec7x",
+    lat: 28.5793, lng: 77.3768, band: "ultra", rent: "₹80k–1.5L", bhk: "3/4 BHK", status: "ready",
+    notes: "DASNAC ultra-luxury flagship. Iconic twin towers, large floor plates (3000+ sqft), infinity pool, sky lounges. Among Noida's tallest residential buildings. Walkable to Sec 76 metro." },
+  { name: "DASNAC Burj Noida", sector: "Sector 75", area: "sec7x",
+    lat: 28.5810, lng: 77.3782, band: "ultra", rent: "₹90k–1.8L", bhk: "3/4/5 BHK", status: "new",
+    notes: "Newer DASNAC ultra-luxury tower. Branded private residences, biometric security, sky club, concierge. Boutique scale, very limited rental supply." },
+  { name: "EL Cleo (ABA)", sector: "Sector 121", area: "central",
+    lat: 28.5572, lng: 77.3802, band: "premium", rent: "₹45k–70k", bhk: "3/4 BHK", status: "new",
+    notes: "ABA Corp's newer Cleo-branded development next to Cleo County. Larger floor plates, modern Greek-themed amenities, premium clubhouse. Family-popular." }
 ];
 
 // =============== RATINGS ===============
@@ -2017,7 +2028,10 @@ const RATINGS = {
   "Gardenia Gateway": { build: 6, reviews: 6 },
   "Sethi Max Royal": { build: 7, reviews: 7 },
   "Exotica Eastern Court": { build: 7, reviews: 7 },
-  "Sam Palms (Samridhi Grand Avenue)": { build: 6, reviews: 6 }
+  "Sam Palms (Samridhi Grand Avenue)": { build: 6, reviews: 6 },
+  "DASNAC The Jewel of Noida": { build: 9, reviews: 8 },
+  "DASNAC Burj Noida": { build: 10, reviews: 8 },
+  "EL Cleo (ABA)": { build: 8, reviews: 8 }
 };
 
 function proximityScore(distKm) {
