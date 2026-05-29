@@ -1947,7 +1947,21 @@ const SOCIETIES = [
     notes: "Newer DASNAC ultra-luxury tower. Branded private residences, biometric security, sky club, concierge. Boutique scale, very limited rental supply." },
   { name: "EL Cleo (ABA)", sector: "Sector 121", area: "central",
     lat: 28.5572, lng: 77.3802, band: "premium", rent: "₹45k–70k", bhk: "3/4 BHK", status: "new",
-    notes: "ABA Corp's newer Cleo-branded development next to Cleo County. Larger floor plates, modern Greek-themed amenities, premium clubhouse. Family-popular." }
+    notes: "ABA Corp's newer Cleo-branded development next to Cleo County. Larger floor plates, modern Greek-themed amenities, premium clubhouse. Family-popular." },
+
+  // ===== ADDED: Sector 50 expansion =====
+  { name: "Ambience Tiverton", sector: "Sector 50", area: "sec7x",
+    lat: 28.6015, lng: 77.3600, band: "premium", rent: "₹50k–80k", bhk: "3/4 BHK", status: "ready",
+    notes: "Ambience Group flagship in Sec 50. Large 3/4BHK units, well-maintained clubhouse, mature greenery. Premium address, close to Sec 50 metro + markets." },
+  { name: "Saviour Greenisle", sector: "Sector 50", area: "sec7x",
+    lat: 28.5985, lng: 77.3565, band: "premium", rent: "₹38k–60k", bhk: "2/3 BHK", status: "ready",
+    notes: "Saviour Group premium tower society. Quieter pocket, good for families. Walking distance to Sec 50 metro." },
+  { name: "Sukh Sagar Apartments", sector: "Sector 50", area: "sec7x",
+    lat: 28.5995, lng: 77.3610, band: "mid", rent: "₹28k–42k", bhk: "2/3 BHK", status: "ready",
+    notes: "Older mid-range society in Sec 50 cluster. Lower rents, established community, basic amenities." },
+  { name: "Lotus Pond Villas", sector: "Sector 50", area: "sec7x",
+    lat: 28.6005, lng: 77.3625, band: "premium", rent: "₹45k–65k", bhk: "3/4 BHK", status: "ready",
+    notes: "Boutique villa + apartment cluster. Lower density, mature trees. Premium feel without high-rise scale." }
 ];
 
 // =============== RATINGS ===============
@@ -2031,7 +2045,11 @@ const RATINGS = {
   "Sam Palms (Samridhi Grand Avenue)": { build: 6, reviews: 6 },
   "DASNAC The Jewel of Noida": { build: 9, reviews: 8 },
   "DASNAC Burj Noida": { build: 10, reviews: 8 },
-  "EL Cleo (ABA)": { build: 8, reviews: 8 }
+  "EL Cleo (ABA)": { build: 8, reviews: 8 },
+  "Ambience Tiverton": { build: 8, reviews: 8 },
+  "Saviour Greenisle": { build: 7, reviews: 7 },
+  "Sukh Sagar Apartments": { build: 6, reviews: 6 },
+  "Lotus Pond Villas": { build: 7, reviews: 7 }
 };
 
 function proximityScore(distKm) {
