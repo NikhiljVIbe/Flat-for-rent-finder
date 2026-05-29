@@ -2058,30 +2058,72 @@ function ratingColor(score) {
 }
 
 // =============== AIR QUALITY (AQI) ===============
-// CPCB monitoring stations in Noida + Greater Noida.
-// `fallbackAqi` = recent annual-average AQI used if live fetch fails.
-// Live data is fetched from AQICN's public API (no key required for `demo`,
-// but get a free token at https://aqicn.org/data-platform/token for higher
-// rate limits and reliability).
-const AQICN_TOKEN = 'demo';
+// 6 sector reference points (matching CPCB monitoring station locations in Noida +
+// Greater Noida) to show sector-wise AQI variation.
+//
+// Live data: Open-Meteo air-quality API (https://open-meteo.com/) — free, no auth,
+// CORS-friendly, backed by Copernicus CAMS atmospheric model. Returns PM2.5/PM10
+// in µg/m³ which we convert to *Indian CPCB AQI* using official CPCB breakpoints
+// (https://app.cpcbccr.com/AQI_India/). Open-Meteo's own us_aqi/european_aqi fields
+// are NOT used because they're broken for extreme values (return 1300+ on a 0–500
+// scale).
+//
+// `fallbackAqi` = realistic typical AQI used only if the API request fails.
 const AQI_STATIONS = [
-  { name: "Sector 1, Noida",            lat: 28.5836, lng: 77.3158, fallbackAqi: 180 },
-  { name: "Sector 62, Noida",           lat: 28.6276, lng: 77.3658, fallbackAqi: 195 },
-  { name: "Sector 116, Noida",          lat: 28.5683, lng: 77.3947, fallbackAqi: 185 },
-  { name: "Sector 125, Noida",          lat: 28.5450, lng: 77.3870, fallbackAqi: 170 },
+  { name: "Sector 1, Noida",              lat: 28.5836, lng: 77.3158, fallbackAqi: 175 },
+  { name: "Sector 62, Noida",             lat: 28.6276, lng: 77.3658, fallbackAqi: 195 },
+  { name: "Sector 116, Noida",            lat: 28.5683, lng: 77.3947, fallbackAqi: 185 },
+  { name: "Sector 125, Noida",            lat: 28.5450, lng: 77.3870, fallbackAqi: 170 },
   { name: "Knowledge Park III, Gr Noida", lat: 28.4737, lng: 77.4853, fallbackAqi: 175 },
   { name: "Knowledge Park V, Gr Noida",   lat: 28.4773, lng: 77.4824, fallbackAqi: 178 }
 ];
-// Each station starts at fallback; live values fill in once fetch resolves
-AQI_STATIONS.forEach(s => { s.aqi = s.fallbackAqi; s.live = false; });
+AQI_STATIONS.forEach(s => { s.aqi = s.fallbackAqi; s.live = false; s.pm25 = null; s.pm10 = null; s.dataTime = null; });
+
+// CPCB India PM2.5 → AQI conversion (24-hour avg breakpoints)
+function pm25ToCpcbAqi(pm) {
+  if (pm == null || pm < 0) return null;
+  const breakpoints = [
+    [0,     30,   0,   50 ],
+    [30.1,  60,   51,  100],
+    [60.1,  90,   101, 200],
+    [90.1,  120,  201, 300],
+    [120.1, 250,  301, 400],
+    [250.1, 500,  401, 500]
+  ];
+  for (const [lo, hi, aqiLo, aqiHi] of breakpoints) {
+    if (pm >= lo && pm <= hi) {
+      return Math.round(((aqiHi - aqiLo) / (hi - lo)) * (pm - lo) + aqiLo);
+    }
+  }
+  return pm > 500 ? 500 : 0;
+}
+
+// CPCB India PM10 → AQI (24-hour avg breakpoints)
+function pm10ToCpcbAqi(pm) {
+  if (pm == null || pm < 0) return null;
+  const breakpoints = [
+    [0,     50,   0,   50 ],
+    [50.1,  100,  51,  100],
+    [100.1, 250,  101, 200],
+    [250.1, 350,  201, 300],
+    [350.1, 430,  301, 400],
+    [430.1, 600,  401, 500]
+  ];
+  for (const [lo, hi, aqiLo, aqiHi] of breakpoints) {
+    if (pm >= lo && pm <= hi) {
+      return Math.round(((aqiHi - aqiLo) / (hi - lo)) * (pm - lo) + aqiLo);
+    }
+  }
+  return pm > 600 ? 500 : 0;
+}
 
 function aqiCategory(aqi) {
-  if (aqi <= 50)  return { label: 'Good',       short: 'Good',  color: '#10b981', text: '#fff' };
-  if (aqi <= 100) return { label: 'Satisfactory', short: 'OK',   color: '#84cc16', text: '#fff' };
-  if (aqi <= 200) return { label: 'Moderate',   short: 'Mod',   color: '#f59e0b', text: '#fff' };
-  if (aqi <= 300) return { label: 'Poor',       short: 'Poor',  color: '#f97316', text: '#fff' };
-  if (aqi <= 400) return { label: 'Very Poor',  short: 'VPoor', color: '#dc2626', text: '#fff' };
-  return              { label: 'Severe',     short: 'Sev',   color: '#7e1d1d', text: '#fff' };
+  if (aqi <= 50)  return { label: 'Good',         color: '#10b981' };
+  if (aqi <= 100) return { label: 'Satisfactory', color: '#84cc16' };
+  if (aqi <= 200) return { label: 'Moderate',     color: '#f59e0b' };
+  if (aqi <= 300) return { label: 'Poor',         color: '#f97316' };
+  if (aqi <= 400) return { label: 'Very Poor',    color: '#dc2626' };
+  return              { label: 'Severe',       color: '#7e1d1d' };
 }
 
 function nearestAqiStation(lat, lng) {
@@ -2095,16 +2137,34 @@ function nearestAqiStation(lat, lng) {
 
 async function fetchLiveAQI(station) {
   try {
-    const r = await fetch(`https://api.waqi.info/feed/geo:${station.lat};${station.lng}/?token=${AQICN_TOKEN}`);
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${station.lat}&longitude=${station.lng}&current=pm2_5,pm10&timezone=auto`;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('http ' + r.status);
     const j = await r.json();
-    if (j && j.status === 'ok' && j.data && typeof j.data.aqi === 'number') {
-      station.aqi = j.data.aqi;
-      station.live = true;
-      if (j.data.city && j.data.city.name) station.stationName = j.data.city.name;
-      return j.data.aqi;
+    if (!j || !j.current) throw new Error('no current data');
+    const pm25 = j.current.pm2_5;
+    const pm10 = j.current.pm10;
+    const aqi25 = pm25ToCpcbAqi(pm25);
+    const aqi10 = pm10ToCpcbAqi(pm10);
+    // CPCB AQI = max sub-index across pollutants. We cap at 500.
+    // PM10 from CAMS sometimes spikes to unrealistic >1500µg/m³ during dust events,
+    // which would push every reading to 500. So we trust PM2.5 as the primary driver
+    // and only use PM10 when both are present and PM10 looks plausible (<600).
+    let aqi = aqi25;
+    if (aqi25 != null && aqi10 != null && pm10 < 600) {
+      aqi = Math.max(aqi25, aqi10);
     }
-  } catch (e) { /* silent: fall back to typical value */ }
-  return null;
+    if (aqi == null) throw new Error('aqi calc failed');
+    station.aqi = aqi;
+    station.pm25 = pm25;
+    station.pm10 = pm10;
+    station.dataTime = j.current.time;
+    station.live = true;
+    return aqi;
+  } catch (e) {
+    console.warn('[aqi]', station.name, 'fetch failed:', e.message);
+    return null;
+  }
 }
 
 function aqiSectionHTML(soc) {
@@ -2457,20 +2517,30 @@ function refreshAqiMarker(station) {
   if (aqiMarkers[station.name]) {
     aqiMarkers[station.name].setIcon(makeAqiIcon(station));
     const cat = aqiCategory(station.aqi);
+    const pmRow = station.live && station.pm25 != null
+      ? `<div class="popup-row" style="padding:4px 0"><span>PM2.5</span><span class="strong">${station.pm25.toFixed(1)} µg/m³</span></div>
+         ${station.pm10 != null ? `<div class="popup-row" style="padding:4px 0"><span>PM10</span><span class="strong">${station.pm10.toFixed(0)} µg/m³</span></div>` : ''}`
+      : '';
+    const sourceLine = station.live
+      ? `Live · via Open-Meteo (CAMS atmospheric model)`
+      : `Typical recent average (API offline)`;
+    const updatedLine = station.dataTime
+      ? `<div style="font-size:9.5px;color:var(--ink-muted);margin-top:4px">Updated ${station.dataTime.replace('T',' ')} local</div>`
+      : '';
     aqiMarkers[station.name].setPopupContent(
-      `<div class="popup-card" style="min-width:200px">
+      `<div class="popup-card" style="min-width:220px">
         <div class="popup-title">${station.name}</div>
-        <div class="popup-sector">CPCB monitoring station</div>
+        <div class="popup-sector">Air quality reference point</div>
         <div class="popup-aqi-body" style="margin-top:8px">
           <div class="popup-aqi-value" style="background:${cat.color}">${station.aqi}</div>
           <div class="popup-aqi-meta">
             <div class="popup-aqi-cat" style="color:${cat.color}">${cat.label}</div>
-            <div class="popup-aqi-station">${station.live ? 'Live · via AQICN' : 'Typical annual avg'}</div>
+            <div class="popup-aqi-station">CPCB AQI from PM2.5</div>
           </div>
         </div>
-        <div class="popup-notes" style="margin-top:8px">
-          <a href="https://aqicn.org/city/india/noida/" target="_blank" rel="noopener" style="color:var(--brand-deep);font-weight:600;text-decoration:none">View live AQI on aqicn.org →</a>
-        </div>
+        ${pmRow ? `<div style="margin-top:8px;border-top:1px solid var(--border);padding-top:6px">${pmRow}</div>` : ''}
+        <div style="font-size:10px;color:var(--ink-muted);margin-top:8px;line-height:1.4">${sourceLine}${updatedLine}</div>
+        <div style="margin-top:6px"><a href="https://aqicn.org/city/india/noida/" target="_blank" rel="noopener" style="color:var(--brand-deep);font-weight:600;text-decoration:none;font-size:11px">Cross-check on aqicn.org →</a></div>
       </div>`
     );
   }
