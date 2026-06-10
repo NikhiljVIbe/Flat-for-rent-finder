@@ -2386,15 +2386,28 @@ const bandColors = {
 };
 
 // Popup options — Leaflet's built-in maxHeight makes the content scroll if it overflows.
+// minWidth/maxWidth must match the CSS .popup-card sizing or the right side gets
+// clipped (Leaflet's default maxWidth is only 300px).
 // autoPanPadding ensures the popup never lands too close to the viewport edges.
+function popupWidthForViewport() {
+  const vw = window.innerWidth;
+  if (vw <= 380) return { min: 260, max: Math.min(vw - 40, 340) };
+  if (vw <= 640) return { min: 280, max: Math.min(vw - 32, 380) };
+  return { min: 360, max: 440 };
+}
 const POPUP_OPTS = {
   maxHeight: Math.floor(window.innerHeight * 0.7),
+  minWidth: popupWidthForViewport().min,
+  maxWidth: popupWidthForViewport().max,
   autoPan: true,
   autoPanPadding: L.point(50, 60),
   keepInView: true
 };
 window.addEventListener('resize', () => {
   POPUP_OPTS.maxHeight = Math.floor(window.innerHeight * 0.7);
+  const w = popupWidthForViewport();
+  POPUP_OPTS.minWidth = w.min;
+  POPUP_OPTS.maxWidth = w.max;
 });
 
 const markers = {};
