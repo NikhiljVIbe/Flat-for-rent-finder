@@ -971,6 +971,39 @@
   body.aqi-hidden .aqi-legend-rows { display: none; }
   body.aqi-hidden .aqi-station-marker { display: none; }
 
+  /* Route distance/time chip floating on the route line midpoint */
+  .route-label {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 700;
+    box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45), 0 0 0 3px rgba(255, 255, 255, 0.95);
+    white-space: nowrap;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: -0.01em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+  }
+  .route-label .route-label-divider {
+    width: 1px;
+    height: 11px;
+    background: rgba(255, 255, 255, 0.4);
+  }
+  .route-label .route-label-est {
+    font-size: 9px;
+    font-weight: 600;
+    opacity: 0.85;
+    letter-spacing: 0.04em;
+    font-family: 'Inter', sans-serif;
+  }
+  @media (max-width: 640px) {
+    .route-label { font-size: 10.5px; padding: 5px 10px; }
+  }
+
   /* Status badge */
   .status-badge {
     display: inline-flex;
@@ -1961,7 +1994,30 @@ const SOCIETIES = [
     notes: "Older mid-range society in Sec 50 cluster. Lower rents, established community, basic amenities." },
   { name: "Lotus Pond Villas", sector: "Sector 50", area: "sec7x",
     lat: 28.6005, lng: 77.3625, band: "premium", rent: "₹45k–65k", bhk: "3/4 BHK", status: "ready",
-    notes: "Boutique villa + apartment cluster. Lower density, mature trees. Premium feel without high-rise scale." }
+    notes: "Boutique villa + apartment cluster. Lower density, mature trees. Premium feel without high-rise scale." },
+
+  // ===== ADDED: Sector 150 + Expressway expansion =====
+  { name: "Hero Homes Sector 150", sector: "Sector 150", area: "expressway",
+    lat: 28.4685, lng: 77.4825, band: "premium", rent: "₹40k–60k", bhk: "3 BHK", status: "new",
+    notes: "Hero Realty's flagship in Sec 150. Newly delivered, modern fit-and-finish, large podium + amenities. Great option in the new-launch belt." },
+  { name: "ATS Le Grandiose", sector: "Sector 150", area: "expressway",
+    lat: 28.4730, lng: 77.4750, band: "ultra", rent: "₹55k–90k", bhk: "3/4 BHK", status: "ready",
+    notes: "ATS ultra-premium project. Sprawling green campus, sports facilities, premium clubhouse. Top-rated Sec 150 luxury." },
+  { name: "Eldeco Live by the Greens", sector: "Sector 150", area: "expressway",
+    lat: 28.4720, lng: 77.4780, band: "premium", rent: "₹45k–70k", bhk: "3 BHK", status: "ready",
+    notes: "Eldeco green-themed development. 70%+ open area, jogging trails, large balconies. Family-popular." },
+  { name: "ATS Picturesque Reprieves", sector: "Sector 152", area: "expressway",
+    lat: 28.4665, lng: 77.4810, band: "premium", rent: "₹45k–65k", bhk: "3 BHK", status: "ready",
+    notes: "ATS quality with Picture-themed landscaping. Lower density, premium clubhouse. Quieter pocket on far expressway." },
+  { name: "Antriksh Eden Forest", sector: "Sector 137", area: "expressway",
+    lat: 28.5158, lng: 77.4195, band: "mid", rent: "₹28k–42k", bhk: "2/3 BHK", status: "ready",
+    notes: "Mid-budget tower society close to Sec 137 metro. Heavy IT-crowd, walkable to expressway." },
+  { name: "Civitech Sampada", sector: "Sector 137", area: "expressway",
+    lat: 28.5172, lng: 77.4232, band: "premium", rent: "₹38k–55k", bhk: "2/3 BHK", status: "ready",
+    notes: "Civitech premium tower. Modern fit-and-finish, well-rated maintenance. Walking distance to Sec 137 metro." },
+  { name: "Mahagun Medalleo", sector: "Sector 107", area: "central",
+    lat: 28.5685, lng: 77.3650, band: "ultra", rent: "₹70k–1.1L", bhk: "3/4 BHK", status: "new",
+    notes: "Mahagun ultra-luxury launch near Lotus 300. Large units, designer interiors, top-tier clubhouse. Newly delivered." }
 ];
 
 // =============== RATINGS ===============
@@ -2049,7 +2105,14 @@ const RATINGS = {
   "Ambience Tiverton": { build: 8, reviews: 8 },
   "Saviour Greenisle": { build: 7, reviews: 7 },
   "Sukh Sagar Apartments": { build: 6, reviews: 6 },
-  "Lotus Pond Villas": { build: 7, reviews: 7 }
+  "Lotus Pond Villas": { build: 7, reviews: 7 },
+  "Hero Homes Sector 150": { build: 8, reviews: 8 },
+  "ATS Le Grandiose": { build: 9, reviews: 9 },
+  "Eldeco Live by the Greens": { build: 8, reviews: 8 },
+  "ATS Picturesque Reprieves": { build: 9, reviews: 8 },
+  "Antriksh Eden Forest": { build: 6, reviews: 6 },
+  "Civitech Sampada": { build: 7, reviews: 7 },
+  "Mahagun Medalleo": { build: 9, reviews: 8 }
 };
 
 function proximityScore(distKm) {
@@ -2320,6 +2383,7 @@ window.addEventListener('resize', () => {
 
 const markers = {};
 let activeRoute = null;
+let activeRouteLabel = null;
 let activeMarkerName = null;
 
 function makeSocietyIcon(band, active = false) {
@@ -2516,8 +2580,9 @@ async function selectSociety(soc) {
   const marker = markers[soc.name];
   marker.setIcon(makeSocietyIcon(soc.band, true));
 
-  // Clear previous route
+  // Clear previous route + its midpoint distance label
   if (activeRoute) { map.removeLayer(activeRoute); activeRoute = null; }
+  if (activeRouteLabel) { map.removeLayer(activeRouteLabel); activeRouteLabel = null; }
 
   // Open popup (loading)
   marker.bindPopup(buildPopupHTML(soc, null), POPUP_OPTS).openPopup();
@@ -2527,6 +2592,7 @@ async function selectSociety(soc) {
   marker.setPopupContent(buildPopupHTML(soc, route));
 
   // Draw route
+  let midpoint = null;
   if (route.geometry) {
     activeRoute = L.geoJSON(route.geometry, {
       style: { color: '#6366f1', weight: 5, opacity: 0.85, lineCap: 'round', lineJoin: 'round' }
@@ -2536,12 +2602,36 @@ async function selectSociety(soc) {
       style: { color: '#6366f1', weight: 12, opacity: 0.15, lineCap: 'round' }
     }).addTo(map);
     activeRoute._halo = halo;
+    // Compute midpoint from actual route geometry (coords are [lng, lat])
+    const coords = route.geometry.coordinates || [];
+    if (coords.length > 0) {
+      const mid = coords[Math.floor(coords.length / 2)];
+      midpoint = [mid[1], mid[0]];
+    }
     map.fitBounds(activeRoute.getBounds().pad(0.25));
   } else {
     activeRoute = L.polyline([[OFFICE.lat, OFFICE.lng], [soc.lat, soc.lng]], {
       color: '#6366f1', weight: 3, opacity: 0.6, dashArray: '6,8'
     }).addTo(map);
+    // Straight-line midpoint
+    midpoint = [(OFFICE.lat + soc.lat) / 2, (OFFICE.lng + soc.lng) / 2];
     map.fitBounds(activeRoute.getBounds().pad(0.25));
+  }
+
+  // Floating distance/time chip on the route midpoint — always visible on the map
+  if (midpoint) {
+    const estTag = route.source === 'estimate' ? '<span class="route-label-est">EST</span>' : '';
+    activeRouteLabel = L.marker(midpoint, {
+      icon: L.divIcon({
+        className: '',
+        html: `<div class="route-label">${route.distanceKm} km <span class="route-label-divider"></span> ${route.durationMin} min ${estTag}</div>`,
+        iconSize: [null, null],
+        iconAnchor: [null, null]
+      }),
+      interactive: false,
+      zIndexOffset: 800,
+      keyboard: false
+    }).addTo(map);
   }
 
   // Update card meta
@@ -2820,6 +2910,7 @@ sortBy.addEventListener('change', renderList);
 // Reset view
 document.getElementById('resetBtn').addEventListener('click', () => {
   if (activeRoute) { map.removeLayer(activeRoute); activeRoute = null; }
+  if (activeRouteLabel) { map.removeLayer(activeRouteLabel); activeRouteLabel = null; }
   if (activeMarkerName && markers[activeMarkerName]) {
     const prevSoc = SOCIETIES.find(s => s.name === activeMarkerName);
     if (prevSoc) markers[activeMarkerName].setIcon(makeSocietyIcon(prevSoc.band, false));
