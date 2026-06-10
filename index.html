@@ -2199,21 +2199,26 @@ function ratingColor(score) {
 }
 
 // =============== AIR QUALITY (AQI) ===============
-// 6 CPCB monitoring stations in Noida + Greater Noida.
-// Each station has its real AQICN idx (extracted from aqicn.org/city/india/noida/...).
+// 6 reference points at Noida + Greater Noida CPCB monitoring-station locations.
 //
-// Live data: AQICN's unauthenticated observation feed
-//   https://api.waqi.info/api/feed/@<idx>/obs.en.json
-// This is the SAME endpoint aqicn.org uses internally to render station pages —
-// it returns the actual CPCB station readings (PM2.5/PM10/etc.) with no token
-// required. The response embeds some encoded historical-data strings with raw
-// control characters, so we strip those before JSON.parse.
+// DATA SOURCE — current readings, polled every 10 minutes:
+//   • Default: Open-Meteo air-quality API (https://open-meteo.com/) — free, no
+//     auth, CORS-friendly, real-time Copernicus CAMS atmospheric model. Returns
+//     CURRENT PM2.5/PM10 (verified fresh: timestamps match the current hour).
+//   • Optional upgrade: set AQICN_TOKEN below to a free token from
+//     https://aqicn.org/data-platform/token — then we pull live CPCB GROUND-STATION
+//     readings per sector (more granular than CAMS's ~11 km model grid).
 //
-// We then compute CPCB India AQI ourselves from PM2.5 using the official
-// breakpoints (https://app.cpcbccr.com/AQI_India/), so the displayed AQI matches
-// what CPCB shows on their own dashboards.
+// We DON'T use AQICN's old /api/feed/@idx/obs.en.json endpoint anymore: it serves
+// a stale per-station cache (was returning 2024 data for these stations in 2026).
+// We DON'T use Open-Meteo's own us_aqi/european_aqi fields: broken at high values.
+// Instead we compute CPCB India AQI from PM2.5 ourselves using the official
+// breakpoints (https://app.cpcbccr.com/AQI_India/).
 //
-// `fallbackAqi` is used only if the live fetch fails.
+// Paste a token here to switch to live CPCB ground-station data (leave '' for Open-Meteo):
+const AQICN_TOKEN = '';
+const AQI_POLL_MS = 10 * 60 * 1000; // re-fetch every 10 minutes
+
 const AQI_STATIONS = [
   { name: "Sector 1, Noida",              idx: 12466, lat: 28.5836, lng: 77.3158, fallbackAqi: 180 },
   { name: "Sector 62, Noida",             idx: 11865, lat: 28.6276, lng: 77.3658, fallbackAqi: 200 },
@@ -2222,7 +2227,7 @@ const AQI_STATIONS = [
   { name: "Knowledge Park III, Gr Noida", idx: 11278, lat: 28.4737, lng: 77.4853, fallbackAqi: 130 },
   { name: "Knowledge Park V, Gr Noida",   idx: 12463, lat: 28.4773, lng: 77.4824, fallbackAqi: 240 }
 ];
-AQI_STATIONS.forEach(s => { s.aqi = s.fallbackAqi; s.live = false; s.pm25 = null; s.pm10 = null; s.dataTime = null; });
+AQI_STATIONS.forEach(s => { s.aqi = s.fallbackAqi; s.live = false; s.pm25 = null; s.pm10 = null; s.dataTime = null; s.source = null; });
 
 // CPCB India PM2.5 → AQI conversion (24-hour avg breakpoints)
 function pm25ToCpcbAqi(pm) {
@@ -2280,44 +2285,72 @@ function nearestAqiStation(lat, lng) {
   return { station: best, distKm: bestD };
 }
 
-async function fetchLiveAQI(station) {
-  if (!station.idx) return null;
+// Combine PM2.5 + PM10 into a single CPCB AQI.
+// PM2.5 is the primary driver; PM10 is folded in only when plausible (<600 µg/m³),
+// because CAMS occasionally reports unrealistic PM10 dust spikes (>1000) that would
+// otherwise peg every reading at 500.
+function combineToCpcbAqi(pm25, pm10) {
+  const a25 = pm25ToCpcbAqi(pm25);
+  const a10 = (pm10 != null && pm10 < 600) ? pm10ToCpcbAqi(pm10) : null;
+  const aqi = Math.max(a25 || 0, a10 || 0);
+  return aqi || null;
+}
+
+function fmtAqiTime(date) {
   try {
-    const r = await fetch(`https://api.waqi.info/api/feed/@${station.idx}/obs.en.json`);
-    if (!r.ok) throw new Error('http ' + r.status);
-    let text = await r.text();
-    // Response embeds encoded historical-data strings with raw control characters
-    // that break strict JSON.parse — strip ALL C0 control chars before parsing.
-    text = text.replace(/[\x00-\x1F]/g, '');
-    const j = JSON.parse(text);
-    const obs = j && j.rxs && j.rxs.obs;
-    if (!Array.isArray(obs)) throw new Error('no obs');
-    let pm25 = null, pm10 = null, stationName = null, timestamp = null;
-    for (const o of obs) {
-      if (o && o.msg) {
-        const msg = o.msg;
-        stationName = msg.city && msg.city.name;
-        timestamp = msg.timestamp;
-        for (const ia of (msg.iaqi || [])) {
-          if (ia.p === 'pm25' && Array.isArray(ia.v)) pm25 = ia.v[0];
-          if (ia.p === 'pm10' && Array.isArray(ia.v)) pm10 = ia.v[0];
-        }
-        break;
-      }
-    }
-    if (pm25 == null && pm10 == null) throw new Error('no pollutant readings');
-    // CPCB AQI = max sub-index across measured pollutants.
-    const aqi25 = pm25ToCpcbAqi(pm25);
-    const aqi10 = pm10ToCpcbAqi(pm10);
-    const aqi = Math.max(aqi25 || 0, aqi10 || 0);
-    if (!aqi) throw new Error('aqi calc failed');
-    station.aqi = aqi;
-    station.pm25 = pm25;
-    station.pm10 = pm10;
-    station.stationName = stationName;
-    station.dataTime = timestamp ? new Date(timestamp * 1000).toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : null;
-    station.live = true;
-    return aqi;
+    return date.toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, day: 'numeric', month: 'short' });
+  } catch (e) {
+    return date.toISOString().slice(0, 16).replace('T', ' ');
+  }
+}
+
+// Primary path: Open-Meteo (current, no auth). Used when AQICN_TOKEN is empty.
+async function fetchAqiOpenMeteo(station) {
+  const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${station.lat}&longitude=${station.lng}&current=pm2_5,pm10&timezone=auto`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('http ' + r.status);
+  const j = await r.json();
+  if (!j || !j.current) throw new Error('no current');
+  const pm25 = j.current.pm2_5, pm10 = j.current.pm10;
+  const aqi = combineToCpcbAqi(pm25, pm10);
+  if (!aqi) throw new Error('aqi calc failed');
+  station.aqi = aqi;
+  station.pm25 = pm25;
+  station.pm10 = pm10;
+  station.dataTime = j.current.time ? fmtAqiTime(new Date(j.current.time)) : null;
+  station.source = 'Open-Meteo (CAMS model)';
+  station.live = true;
+  return aqi;
+}
+
+// Optional path: AQICN with a real token → live CPCB ground-station data per sector.
+async function fetchAqiAqicn(station) {
+  const r = await fetch(`https://api.waqi.info/feed/geo:${station.lat};${station.lng}/?token=${AQICN_TOKEN}`);
+  if (!r.ok) throw new Error('http ' + r.status);
+  const j = await r.json();
+  if (!j || j.status !== 'ok' || !j.data) throw new Error('status ' + (j && j.status));
+  const iaqi = j.data.iaqi || {};
+  const pm25 = iaqi.pm25 ? iaqi.pm25.v : null;
+  const pm10 = iaqi.pm10 ? iaqi.pm10.v : null;
+  // AQICN's data.aqi is already a US-EPA AQI; we prefer our CPCB calc from PM2.5
+  // for consistency with the rest of the app, falling back to data.aqi if no PM.
+  let aqi = combineToCpcbAqi(pm25, pm10);
+  if (!aqi && typeof j.data.aqi === 'number') aqi = j.data.aqi;
+  if (!aqi) throw new Error('no readings');
+  station.aqi = aqi;
+  station.pm25 = pm25;
+  station.pm10 = pm10;
+  if (j.data.city && j.data.city.name) station.stationName = j.data.city.name;
+  station.dataTime = (j.data.time && j.data.time.s) ? j.data.time.s.slice(0, 16) : null;
+  station.source = 'CPCB ground station via AQICN';
+  station.live = true;
+  return aqi;
+}
+
+async function fetchLiveAQI(station) {
+  try {
+    const useToken = AQICN_TOKEN && AQICN_TOKEN !== 'demo';
+    return useToken ? await fetchAqiAqicn(station) : await fetchAqiOpenMeteo(station);
   } catch (e) {
     console.warn('[aqi]', station.name, 'live fetch failed:', e.message);
     return null;
@@ -2721,10 +2754,10 @@ function refreshAqiMarker(station) {
          ${station.pm10 != null ? `<div class="popup-row" style="padding:4px 0"><span>PM10</span><span class="strong">${station.pm10.toFixed(0)} µg/m³</span></div>` : ''}`
       : '';
     const sourceLine = station.live
-      ? `Live · CPCB station via aqicn.org`
+      ? `Live · ${station.source || 'updated'}`
       : `Typical recent average (live fetch failed)`;
     const updatedLine = station.dataTime
-      ? `<div style="font-size:9.5px;color:var(--ink-muted);margin-top:4px">Updated ${station.dataTime} local</div>`
+      ? `<div style="font-size:9.5px;color:var(--ink-muted);margin-top:4px">Updated ${station.dataTime} · auto-refreshes every 10 min</div>`
       : '';
     aqiMarkers[station.name].setPopupContent(
       `<div class="popup-card" style="min-width:220px">
@@ -2774,16 +2807,30 @@ if (aqiToggle) {
   aqiToggle.addEventListener('click', (e) => { e.stopPropagation(); setAqiVisible(!aqiVisible); });
 }
 
-// Fetch live AQI for each station in parallel; update markers as responses come in
-(async function loadLiveAQI() {
-  await Promise.all(AQI_STATIONS.map(async (station) => {
-    const result = await fetchLiveAQI(station);
-    if (result !== null) {
+// Fetch live AQI for every station, refresh markers, and refresh any open society
+// popup so its AQI strip reflects the new reading. Polled every AQI_POLL_MS.
+async function refreshAllAQI() {
+  const results = await Promise.all(AQI_STATIONS.map(async (station) => {
+    const aqi = await fetchLiveAQI(station);
+    if (aqi !== null) {
       refreshAqiMarker(station);
-      console.log(`[aqi] ${station.name}: ${station.aqi} (live)`);
+      console.log(`[aqi] ${station.name}: ${station.aqi} (${station.source})`);
     }
+    return aqi;
   }));
-})();
+  // If a society popup is open, rebuild its content so the AQI strip updates live.
+  if (activeMarkerName && markers[activeMarkerName] && markers[activeMarkerName].isPopupOpen()) {
+    const soc = SOCIETIES.find(s => s.name === activeMarkerName);
+    if (soc) {
+      const route = routeCache[soc.name] || null;
+      markers[activeMarkerName].setPopupContent(buildPopupHTML(soc, route));
+    }
+  }
+  const ok = results.filter(r => r !== null).length;
+  console.log(`[aqi] refresh complete: ${ok}/${AQI_STATIONS.length} live · next in 10 min`);
+}
+refreshAllAQI();
+setInterval(refreshAllAQI, AQI_POLL_MS);
 
 // =============== SIDEBAR ===============
 const listEl = document.getElementById('list');
