@@ -2215,8 +2215,8 @@ function ratingColor(score) {
 // Instead we compute CPCB India AQI from PM2.5 ourselves using the official
 // breakpoints (https://app.cpcbccr.com/AQI_India/).
 //
-// Paste a token here to switch to live CPCB ground-station data (leave '' for Open-Meteo):
-const AQICN_TOKEN = '';
+// Paste a token here to switch to live ground-station data (leave '' for Open-Meteo):
+const AQICN_TOKEN = 'b7c4bf225d95fd171151e01e5f5676cedabeb4cf';
 const AQI_POLL_MS = 10 * 60 * 1000; // re-fetch every 10 minutes
 
 const AQI_STATIONS = [
@@ -2317,32 +2317,36 @@ async function fetchAqiOpenMeteo(station) {
   station.aqi = aqi;
   station.pm25 = pm25;
   station.pm10 = pm10;
+  station.unit = 'µg/m³';
   station.dataTime = j.current.time ? fmtAqiTime(new Date(j.current.time)) : null;
   station.source = 'Open-Meteo (CAMS model)';
   station.live = true;
   return aqi;
 }
 
-// Optional path: AQICN with a real token → live CPCB ground-station data per sector.
+// Optional path: AQICN with a real token → live ground-station data per sector.
+// IMPORTANT: AQICN's data.aqi and iaqi.*.v are already finished AQI sub-indices on
+// the US-EPA 0–500 scale (NOT raw µg/m³ concentrations). So we use data.aqi directly
+// — feeding the sub-indices through our CPCB-from-concentration converter would
+// double-convert and inflate the number. This value matches aqicn.org 1:1.
 async function fetchAqiAqicn(station) {
   const r = await fetch(`https://api.waqi.info/feed/geo:${station.lat};${station.lng}/?token=${AQICN_TOKEN}`);
   if (!r.ok) throw new Error('http ' + r.status);
   const j = await r.json();
   if (!j || j.status !== 'ok' || !j.data) throw new Error('status ' + (j && j.status));
+  const aqi = j.data.aqi;
+  if (typeof aqi !== 'number') throw new Error('no aqi value');
   const iaqi = j.data.iaqi || {};
-  const pm25 = iaqi.pm25 ? iaqi.pm25.v : null;
-  const pm10 = iaqi.pm10 ? iaqi.pm10.v : null;
-  // AQICN's data.aqi is already a US-EPA AQI; we prefer our CPCB calc from PM2.5
-  // for consistency with the rest of the app, falling back to data.aqi if no PM.
-  let aqi = combineToCpcbAqi(pm25, pm10);
-  if (!aqi && typeof j.data.aqi === 'number') aqi = j.data.aqi;
-  if (!aqi) throw new Error('no readings');
   station.aqi = aqi;
-  station.pm25 = pm25;
-  station.pm10 = pm10;
+  // Store PM sub-indices (US-EPA AQI units, not µg/m³)
+  station.pm25 = iaqi.pm25 ? iaqi.pm25.v : null;
+  station.pm10 = iaqi.pm10 ? iaqi.pm10.v : null;
+  station.unit = 'aqi';
   if (j.data.city && j.data.city.name) station.stationName = j.data.city.name;
-  station.dataTime = (j.data.time && j.data.time.s) ? j.data.time.s.slice(0, 16) : null;
-  station.source = 'CPCB ground station via AQICN';
+  station.dataTime = (j.data.time && j.data.time.s)
+    ? fmtAqiTime(new Date(j.data.time.s.replace(' ', 'T')))
+    : null;
+  station.source = 'CPCB ground station · AQICN';
   station.live = true;
   return aqi;
 }
@@ -2749,10 +2753,15 @@ function refreshAqiMarker(station) {
   if (aqiMarkers[station.name]) {
     aqiMarkers[station.name].setIcon(makeAqiIcon(station));
     const cat = aqiCategory(station.aqi);
-    const pmRow = station.live && station.pm25 != null
-      ? `<div class="popup-row" style="padding:4px 0"><span>PM2.5</span><span class="strong">${station.pm25.toFixed(1)} µg/m³</span></div>
-         ${station.pm10 != null ? `<div class="popup-row" style="padding:4px 0"><span>PM10</span><span class="strong">${station.pm10.toFixed(0)} µg/m³</span></div>` : ''}`
+    const isConc = station.unit === 'µg/m³';
+    const pmSuffix = isConc ? ' µg/m³' : '';
+    const pm25Disp = station.pm25 != null ? (isConc ? station.pm25.toFixed(1) : station.pm25) : null;
+    const pm10Disp = station.pm10 != null ? (isConc ? station.pm10.toFixed(0) : station.pm10) : null;
+    const pmRow = station.live && pm25Disp != null
+      ? `<div class="popup-row" style="padding:4px 0"><span>PM2.5${isConc ? '' : ' (AQI)'}</span><span class="strong">${pm25Disp}${pmSuffix}</span></div>
+         ${pm10Disp != null ? `<div class="popup-row" style="padding:4px 0"><span>PM10${isConc ? '' : ' (AQI)'}</span><span class="strong">${pm10Disp}${pmSuffix}</span></div>` : ''}`
       : '';
+    const aqiSubLabel = isConc ? 'CPCB AQI from PM2.5' : 'US-EPA AQI (matches aqicn.org)';
     const sourceLine = station.live
       ? `Live · ${station.source || 'updated'}`
       : `Typical recent average (live fetch failed)`;
@@ -2767,7 +2776,7 @@ function refreshAqiMarker(station) {
           <div class="popup-aqi-value" style="background:${cat.color}">${station.aqi}</div>
           <div class="popup-aqi-meta">
             <div class="popup-aqi-cat" style="color:${cat.color}">${cat.label}</div>
-            <div class="popup-aqi-station">CPCB AQI from PM2.5</div>
+            <div class="popup-aqi-station">${aqiSubLabel}</div>
           </div>
         </div>
         ${pmRow ? `<div style="margin-top:8px;border-top:1px solid var(--border);padding-top:6px">${pmRow}</div>` : ''}
