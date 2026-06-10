@@ -488,7 +488,18 @@
   .leaflet-popup-content::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,0.3); }
   .leaflet-popup-tip { box-shadow: var(--shadow-md) !important; }
 
-  .popup-card { min-width: 240px; font-size: 12px; }
+  .popup-card { min-width: 360px; max-width: 420px; font-size: 12px; }
+  /* 2-column grid for the basic info rows — saves ~50% of their vertical space */
+  .popup-rows-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 18px;
+  }
+  /* In the grid, the first two children are the top row → no top border on either,
+     and the next two are the bottom row → each gets a top border instead of relying
+     on adjacent-sibling logic (which would only border 3 of 4 cells in 2D layout). */
+  .popup-rows-grid .popup-row + .popup-row { border-top: none; }
+  .popup-rows-grid .popup-row:nth-child(n+3) { border-top: 1px dashed var(--border); }
   .popup-title {
     font-weight: 700;
     font-size: 15px;
@@ -745,12 +756,14 @@
   }
   .popup-rating-bars {
     display: grid;
-    gap: 4px;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 16px;
+    row-gap: 5px;
   }
   .popup-rating-bar {
     display: grid;
-    grid-template-columns: 72px 1fr 20px;
-    gap: 8px;
+    grid-template-columns: 56px 1fr 18px;
+    gap: 6px;
     align-items: center;
     font-size: 10.5px;
   }
@@ -1394,7 +1407,7 @@
     .popup-rating-circle { width: 36px; height: 36px; font-size: 14px; }
     .popup-rating-label { font-size: 9px; }
     .popup-rating-desc { font-size: 11px; }
-    .popup-rating-bar { font-size: 10px; grid-template-columns: 66px 1fr 18px; }
+    .popup-rating-bar { font-size: 10px; grid-template-columns: 46px 1fr 16px; gap: 5px; }
     a.listings-cta, a.listings-cta:link { font-size: 12px; padding: 10px 12px; }
     .listings-cta-sub { font-size: 9.5px; }
   }
@@ -1494,7 +1507,8 @@
       max-height: 70vh !important;
       max-height: 70dvh !important;
     }
-    .popup-card { min-width: 200px; max-width: 88vw; font-size: 11.5px; }
+    .popup-card { min-width: 280px; max-width: 92vw; font-size: 11.5px; }
+    .popup-rows-grid { column-gap: 14px; }
     .popup-image-wrap { height: 70px; margin: -10px -12px 8px; }
     .popup-image-letter { font-size: 26px; }
     .popup-image-icon { width: 16px; height: 16px; bottom: 8px; left: 10px; }
@@ -1516,13 +1530,15 @@
       overflow: hidden;
     }
 
-    /* Rating: compact mobile — show overall circle + label only, hide breakdown bars */
-    .popup-rating { padding: 7px 10px; margin-top: 7px; }
-    .popup-rating-header { margin-bottom: 0; gap: 9px; }
+    /* Rating: compact mobile — keep breakdown visible now that bars are 2x2 */
+    .popup-rating { padding: 8px 10px; margin-top: 7px; }
+    .popup-rating-header { margin-bottom: 6px; gap: 9px; }
     .popup-rating-circle { width: 32px; height: 32px; font-size: 13px; }
     .popup-rating-label { font-size: 8.5px; margin-bottom: 1px; }
     .popup-rating-desc { font-size: 10.5px; }
-    .popup-rating-bars { display: none; }
+    .popup-rating-bars { column-gap: 12px; row-gap: 4px; }
+    .popup-rating-bar { font-size: 10px; grid-template-columns: 46px 1fr 16px; gap: 5px; }
+    .popup-rating-bar-value { font-size: 10px; }
 
     /* AQI: compact mobile — horizontal one-row layout, smaller everything */
     .popup-aqi { padding: 7px 10px; margin-top: 7px; }
@@ -2464,10 +2480,10 @@ function ratingSectionHTML(soc, distKm) {
       </div>
     </div>
     <div class="popup-rating-bars">
-      ${bar('Proximity', r.proximity)}
-      ${bar('Construction', r.build)}
+      ${bar('Distance', r.proximity)}
+      ${bar('Build', r.build)}
       ${bar('Reviews', r.reviews)}
-      ${bar('Value (rent)', r.value)}
+      ${bar('Value', r.value)}
     </div>
   </div>`;
 }
@@ -2553,9 +2569,11 @@ function buildPopupHTML(soc, route) {
     ${popupImageHTML(soc)}
     <div class="popup-title">${soc.name}</div>
     <div class="popup-sector">${soc.sector}</div>
-    <div class="popup-row"><span>${isUpcoming ? 'Status' : 'Rent'}</span><span class="strong">${soc.rent}</span></div>
-    <div class="popup-row"><span>Config</span><span>${soc.bhk}</span></div>
-    ${routeRows}
+    <div class="popup-rows-grid">
+      <div class="popup-row"><span>${isUpcoming ? 'Status' : 'Rent'}</span><span class="strong">${soc.rent}</span></div>
+      <div class="popup-row"><span>Config</span><span>${soc.bhk}</span></div>
+      ${routeRows}
+    </div>
     <div class="popup-notes">${soc.notes}</div>
     ${ratingSectionHTML(soc, distKm)}
     ${aqiSectionHTML(soc)}
