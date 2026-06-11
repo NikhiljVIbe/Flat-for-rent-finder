@@ -485,7 +485,7 @@
     </a>
     <button class="open-all-btn" id="openAllBtn">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-      Search 3/4 BHK across all 7 sites
+      <span id="openAllLabel">Search 3/4 BHK across all 7 sites</span>
     </button>
   </div>
 
@@ -508,9 +508,9 @@
   </div>
   <div class="grid reviews-grid" id="reviewsGrid"></div>
 
-  <h2 class="section-title">3 BHK / 4 BHK rental listings <span class="bhk-filter-pill">3 BHK or 4 BHK only</span></h2>
+  <h2 class="section-title"><span id="listingsSectionTitle">3 BHK / 4 BHK rental listings</span> <span class="bhk-filter-pill" id="bhkFilterPill">3 BHK or 4 BHK only</span></h2>
   <div class="search-explainer">
-    Each card opens a Google search restricted to that site for <b id="searchExplainerName">this society</b>, <b>filtered to 3 BHK and 4 BHK only</b>. Click any Google result to open the actual listing on that site. Smaller configs (1/2 BHK) are excluded by the query.
+    Each card opens a Google search restricted to that site for <b id="searchExplainerName">this society</b>, <b id="bhkExplainer">filtered to 3 BHK and 4 BHK only</b>. Click any Google result to open the actual listing on that site. Other configs are excluded by the query.
   </div>
   <div class="grid" id="grid"></div>
 
@@ -539,7 +539,7 @@ const REVIEW_SITES = [
     tagline: 'Long-form society reviews',
     desc: 'In-depth resident reviews with ratings on amenities, maintenance, safety, location, and value. Filterable by recent vs. all-time.',
     tags: ['Detailed', 'Resident verified', 'Star ratings'],
-    url: (s) => `https://www.google.com/search?q=${encodeURIComponent(`"${s.name}" Noida review site:magicbricks.com`)}`
+    url: (s) => `https://www.google.com/search?q=${encodeURIComponent(`"${s.name}" ${CITY} review site:magicbricks.com`)}`
   },
   {
     key: '99review',
@@ -547,7 +547,7 @@ const REVIEW_SITES = [
     tagline: 'Highest review volume',
     desc: 'Often has the largest count of resident reviews per society. Categorized ratings (build, location, amenities) and free-text comments.',
     tags: ['Most reviews', 'Categorized'],
-    url: (s) => `https://www.google.com/search?q=${encodeURIComponent(`"${s.name}" Noida review site:99acres.com`)}`
+    url: (s) => `https://www.google.com/search?q=${encodeURIComponent(`"${s.name}" ${CITY} review site:99acres.com`)}`
   },
   {
     key: 'syreview',
@@ -555,7 +555,7 @@ const REVIEW_SITES = [
     tagline: 'Verified residents only',
     desc: 'Strong on verified residents-only reviews. Includes developer reputation context and price trend signals.',
     tags: ['Verified residents', 'Developer info'],
-    url: (s) => `https://www.google.com/search?q=${encodeURIComponent(`"${s.name}" Noida review site:squareyards.com`)}`
+    url: (s) => `https://www.google.com/search?q=${encodeURIComponent(`"${s.name}" ${CITY} review site:squareyards.com`)}`
   },
   {
     key: 'greviews',
@@ -563,7 +563,7 @@ const REVIEW_SITES = [
     tagline: 'Public location reviews',
     desc: 'Star ratings + photos posted by visitors and residents on Google Maps. Best for unsolicited public sentiment.',
     tags: ['Public', 'Photos', 'Stars'],
-    url: (s) => `https://www.google.com/maps/search/${encodeURIComponent(s.name + ' ' + s.sector + ' Noida')}`
+    url: (s) => `https://www.google.com/maps/search/${encodeURIComponent(s.name + ' ' + placeOf(s))}`
   },
   {
     key: 'nbreview',
@@ -571,15 +571,15 @@ const REVIEW_SITES = [
     tagline: 'Renter perspective',
     desc: 'Reviews from people who actually rented in the society — best for understanding tenant experience, landlord behavior, deposits.',
     tags: ['Renter view', 'Honest'],
-    url: (s) => `https://www.google.com/search?q=${encodeURIComponent(`"${s.name}" Noida review site:nobroker.in`)}`
+    url: (s) => `https://www.google.com/search?q=${encodeURIComponent(`"${s.name}" ${CITY} review site:nobroker.in`)}`
   },
   {
     key: 'reddit',
-    name: 'Reddit · r/Noida',
+    name: 'Reddit',
     tagline: 'Unfiltered real-resident takes',
-    desc: 'Honest, unfiltered discussions on r/Noida and r/Indiainvestments. Often catches issues that paid review sites miss.',
+    desc: 'Honest, unfiltered discussions from city subreddits. Often catches issues that paid review sites miss.',
     tags: ['Unfiltered', 'Recent threads', 'Real residents'],
-    url: (s) => `https://www.google.com/search?q=${encodeURIComponent(`"${s.name}" Noida site:reddit.com`)}`
+    url: (s) => `https://www.google.com/search?q=${encodeURIComponent(`"${s.name}" ${CITY} site:reddit.com`)}`
   }
 ];
 
@@ -590,7 +590,7 @@ const PHOTO_SITES = [
     tagline: 'Most exhaustive · all sources',
     desc: 'Aggregated photos from builder sites, listing portals, news, and reviews. Best single source for any society.',
     tags: ['All sources', 'Recent', 'High quality'],
-    url: (s) => `https://www.google.com/search?q=${encodeURIComponent(s.name + ' ' + s.sector + ' Noida')}&tbm=isch`
+    url: (s) => `https://www.google.com/search?q=${encodeURIComponent(s.name + ' ' + placeOf(s))}&tbm=isch`
   },
   {
     key: 'bimages',
@@ -598,7 +598,7 @@ const PHOTO_SITES = [
     tagline: 'Alternative to Google',
     desc: 'Often surfaces different images than Google. Good for cross-referencing the same society from different angles.',
     tags: ['Alternative', 'Different mix'],
-    url: (s) => `https://www.bing.com/images/search?q=${encodeURIComponent(s.name + ' ' + s.sector + ' Noida')}`
+    url: (s) => `https://www.bing.com/images/search?q=${encodeURIComponent(s.name + ' ' + placeOf(s))}`
   },
   {
     key: 'ymaps',
@@ -606,7 +606,7 @@ const PHOTO_SITES = [
     tagline: 'See it in real life',
     desc: 'Walk around the building exterior, check the streetscape, neighborhood feel, parking situation, and entry gates.',
     tags: ['360° view', 'Exterior', 'Surroundings'],
-    url: (s) => `https://www.google.com/maps/search/${encodeURIComponent(s.name + ' ' + s.sector + ' Noida')}`
+    url: (s) => `https://www.google.com/maps/search/${encodeURIComponent(s.name + ' ' + placeOf(s))}`
   }
 ];
 
@@ -618,7 +618,7 @@ const SITES = [
     desc: 'India\'s largest owner-listed rental platform. Save 1 month\'s rent in brokerage. Highly active in Noida.',
     tags: ['No brokerage', 'Owner-verified', 'Most active'],
     domain: 'nobroker.in',
-    browseUrl: 'https://www.nobroker.in/property/rent/noida'
+    browseUrl: () => `https://www.nobroker.in/property/rent/${CITY_SLUG}`
   },
   {
     key: 'magicbricks',
@@ -627,7 +627,7 @@ const SITES = [
     desc: 'Largest inventory — both broker and owner listings. Filter by "Owner" to skip brokerage. Great for premium societies.',
     tags: ['Largest inventory', 'Photos', 'Owner + broker'],
     domain: 'magicbricks.com',
-    browseUrl: 'https://www.magicbricks.com/property-for-rent-noida'
+    browseUrl: () => `https://www.magicbricks.com/property-for-rent/residential-real-estate?cityName=${encodeURIComponent(CITY)}`
   },
   {
     key: 'acres99',
@@ -636,7 +636,7 @@ const SITES = [
     desc: 'Comprehensive listings with filters by floor, facing, furnishing. Many broker-listed but well-maintained data.',
     tags: ['Detailed filters', 'Photos', 'Map view'],
     domain: '99acres.com',
-    browseUrl: 'https://www.99acres.com/property-in-noida-ffid'
+    browseUrl: () => `https://www.99acres.com/search/property/rent/${CITY_SLUG}?city=&keyword=${encodeURIComponent(CITY)}`
   },
   {
     key: 'squareyards',
@@ -645,7 +645,7 @@ const SITES = [
     desc: 'Strong on data — society reviews, price trends, transaction history. Smaller rental inventory but trusted.',
     tags: ['Society reviews', 'Price trends', 'Verified'],
     domain: 'squareyards.com',
-    browseUrl: 'https://www.squareyards.com/rental-property-in-noida'
+    browseUrl: () => `https://www.squareyards.com/rental-property-in-${CITY_SLUG}`
   },
   {
     key: 'housing',
@@ -654,7 +654,7 @@ const SITES = [
     desc: 'Clean UI, strong photo galleries, virtual tours on some listings. Owned by REA Group (Australia).',
     tags: ['Virtual tours', 'Clean UI', 'Photos'],
     domain: 'housing.com',
-    browseUrl: 'https://housing.com/in/rent/noida'
+    browseUrl: () => `https://housing.com/in/rent/${CITY_SLUG}`
   },
   {
     key: 'commonfloor',
@@ -663,7 +663,7 @@ const SITES = [
     desc: 'Strong on society-level listings and reviews. Smaller inventory but useful for cross-referencing.',
     tags: ['Society pages', 'Reviews'],
     domain: 'commonfloor.com',
-    browseUrl: 'https://www.commonfloor.com/listing/in/noida/for-rent'
+    browseUrl: () => `https://www.commonfloor.com/listing/in/${CITY_SLUG}/for-rent`
   },
   {
     key: 'olx',
@@ -672,18 +672,29 @@ const SITES = [
     desc: 'Owner-posted classifieds. Hit-or-miss but occasionally surfaces below-market deals. Always verify in person.',
     tags: ['Classifieds', 'Owner direct', 'Verify carefully'],
     domain: 'olx.in',
-    browseUrl: 'https://www.olx.in/items/q-rent-noida'
+    browseUrl: () => `https://www.olx.in/items/q-rent-${CITY_SLUG}`
   }
 ];
 
-function findUrl(site, s) {
-  return `https://www.google.com/search?q=${encodeURIComponent(`"${s.name}" Noida ("3 BHK" OR "4 BHK") rent site:${site.domain}`)}`;
+const params = new URLSearchParams(window.location.search);
+const CITY = params.get('city') || 'Noida';
+const CITY_SLUG = CITY.toLowerCase().replace(/\s+/g, '-');
+// User's BHK choice from onboarding (comma-separated); default 3,4
+const USER_BHKS = (params.get('userBhk') || '3,4').split(',').map(s => s.trim()).filter(Boolean);
+const BHK_QUERY = '(' + USER_BHKS.map(b => `"${b} BHK"`).join(' OR ') + ')';
+const BHK_LABEL = USER_BHKS.join('/') + ' BHK';
+// Avoid "Bangalore Bangalore" when the society's sector IS the city name
+function placeOf(s) {
+  return s.sector === CITY ? CITY : s.sector + ' ' + CITY;
 }
 
-const params = new URLSearchParams(window.location.search);
+function findUrl(site, s) {
+  return `https://www.google.com/search?q=${encodeURIComponent(`"${s.name}" ${CITY} ${BHK_QUERY} rent site:${site.domain}`)}`;
+}
+
 const society = {
-  name: params.get('society') || 'Noida Society',
-  sector: params.get('sector') || 'Noida',
+  name: params.get('society') || CITY + ' Society',
+  sector: params.get('sector') || CITY,
   band: params.get('band') || '',
   bhk: params.get('bhk') || '',
   rent: params.get('rent') || '',
@@ -694,6 +705,10 @@ document.title = `${society.name} — Reviews, Photos & Listings`;
 document.getElementById('heroTitle').textContent = society.name;
 document.getElementById('searchExplainerName').textContent = society.name;
 document.getElementById('reviewsExplainerName').textContent = society.name + "'s";
+document.getElementById('listingsSectionTitle').textContent = `${BHK_LABEL} rental listings`;
+document.getElementById('bhkFilterPill').textContent = BHK_LABEL + ' only';
+document.getElementById('bhkExplainer').textContent = `filtered to ${BHK_LABEL} only`;
+document.getElementById('openAllLabel').textContent = `Search ${BHK_LABEL} across all 7 sites`;
 
 const metaEl = document.getElementById('heroMeta');
 const metaItems = [];
@@ -746,11 +761,11 @@ gridEl.innerHTML = SITES.map(site => `
       ${site.tags.map(t => `<span class="site-tag">${t}</span>`).join('')}
     </div>
     <a class="site-cta" href="${findUrl(site, society)}" target="_blank" rel="noopener">
-      Find 3/4 BHK listings
+      Find ${BHK_LABEL} listings
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
     </a>
-    <a class="secondary-link" href="${site.browseUrl}" target="_blank" rel="noopener">
-      Or browse all Noida rentals on ${site.name} →
+    <a class="secondary-link" href="${site.browseUrl()}" target="_blank" rel="noopener">
+      Or browse all ${CITY} rentals on ${site.name} →
     </a>
   </div>
 `).join('');

@@ -1149,6 +1149,198 @@
   }
   .reset-btn:hover { background: var(--brand-soft); color: var(--brand-deep); border-color: var(--brand); }
 
+  /* ============ Onboarding wizard ============ */
+  .onboard-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 20px;
+  }
+  .onboard-overlay.show { display: flex; }
+  .onboard-card {
+    background: var(--surface-solid);
+    border-radius: 22px;
+    box-shadow: 0 24px 80px rgba(15, 23, 42, 0.35);
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    max-height: 90dvh;
+    overflow-y: auto;
+    padding: 28px 26px 24px;
+  }
+  .onboard-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--brand-deep);
+    background: var(--brand-soft);
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+  }
+  .onboard-title {
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 4px;
+    line-height: 1.2;
+  }
+  .onboard-sub {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin-bottom: 18px;
+  }
+  .onboard-step { display: none; }
+  .onboard-step.active { display: block; }
+  .onboard-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 14px;
+  }
+  .onboard-chip {
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 9px 15px;
+    border-radius: 999px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .onboard-chip:hover { border-color: var(--brand); color: var(--brand-deep); }
+  .onboard-chip.selected {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+  }
+  .onboard-input-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .onboard-input {
+    flex: 1;
+    padding: 11px 14px;
+    font-size: 13.5px;
+    font-family: inherit;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg);
+    color: var(--ink);
+    min-width: 0;
+  }
+  .onboard-input:focus { outline: none; border-color: var(--brand); background: #fff; }
+  .onboard-search-btn {
+    padding: 11px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    color: #fff;
+    background: var(--ink);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .onboard-search-btn:disabled { opacity: 0.5; cursor: wait; }
+  .onboard-results { display: grid; gap: 6px; margin-bottom: 10px; }
+  .onboard-result {
+    text-align: left;
+    padding: 10px 13px;
+    font-size: 12px;
+    line-height: 1.4;
+    font-family: inherit;
+    border: 1.5px solid var(--border);
+    border-radius: 11px;
+    background: #fff;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .onboard-result:hover { border-color: var(--brand); }
+  .onboard-result.selected { border-color: var(--brand); background: var(--brand-soft); color: var(--ink); }
+  .onboard-result b { color: var(--ink); display: block; font-size: 12.5px; margin-bottom: 1px; }
+  .onboard-hint { font-size: 11px; color: var(--ink-muted); line-height: 1.5; margin-bottom: 6px; }
+  .onboard-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .onboard-back {
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--ink-soft);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px 6px;
+  }
+  .onboard-back:hover { color: var(--ink); }
+  .onboard-next {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13.5px;
+    font-weight: 700;
+    font-family: inherit;
+    color: #fff;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border: none;
+    border-radius: 999px;
+    padding: 12px 24px;
+    cursor: pointer;
+    box-shadow: 0 8px 22px rgba(99, 102, 241, 0.4);
+    transition: transform 0.15s, opacity 0.15s;
+  }
+  .onboard-next:hover { transform: translateY(-1px); }
+  .onboard-next:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+  .onboard-dots { display: flex; gap: 6px; }
+  .onboard-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--border-strong);
+    transition: all 0.2s;
+  }
+  .onboard-dot.active { background: var(--brand); width: 20px; border-radius: 4px; }
+
+  /* Edit prefs button in sidebar header */
+  .edit-prefs-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 8px;
+    font-size: 10.5px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--brand-deep);
+    background: var(--brand-soft);
+    border: none;
+    border-radius: 999px;
+    padding: 5px 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .edit-prefs-btn:hover { background: var(--brand); color: #fff; }
+
+  /* Dynamic-city mode: curated-only filters don't apply */
+  body.dynamic-mode .control-row[data-curated-only] { display: none; }
+
   /* ============ Responsive — bottom sheet pattern ============ */
 
   /* Sheet handle + FAB are mobile-only — hidden on desktop */
@@ -1585,9 +1777,13 @@
       </div>
     </button>
     <div class="header">
-      <span class="header-eyebrow">Live · Noida</span>
+      <span class="header-eyebrow" id="headerEyebrow">Live · Noida</span>
       <h1>Find your next home</h1>
-      <div class="header-sub">Premium societies near <b style="color:var(--ink)">Leverage Edu, Sector 126</b>. Click any pin or card for a live driving route.</div>
+      <div class="header-sub" id="headerSub">Societies near <b style="color:var(--ink)" id="headerOffice">Leverage Edu, Sector 126</b>. Click any pin or card for a live driving route.</div>
+      <button type="button" class="edit-prefs-btn" id="editPrefsBtn">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+        Change city / office / budget
+      </button>
     </div>
 
     <div class="stats">
@@ -1613,7 +1809,7 @@
     </div>
 
     <div class="controls">
-      <div class="control-row">
+      <div class="control-row" data-curated-only>
         <label class="control-label">Price band</label>
         <div class="pill-row" id="bandPills">
           <button class="pill active" data-band="all">All</button>
@@ -1622,7 +1818,7 @@
           <button class="pill" data-band="ultra">Ultra</button>
         </div>
       </div>
-      <div class="control-row">
+      <div class="control-row" data-curated-only>
         <label class="control-label">Area</label>
         <div class="pill-row" id="areaPills">
           <button class="pill active" data-area="all">All</button>
@@ -1632,7 +1828,7 @@
           <button class="pill" data-area="central">Central</button>
         </div>
       </div>
-      <div class="control-row">
+      <div class="control-row" data-curated-only>
         <label class="control-label">Status</label>
         <div class="pill-row" id="statusPills">
           <button class="pill active" data-status="all">All</button>
@@ -1708,17 +1904,110 @@
   <span id="sheetFabLabel">View list</span>
 </button>
 
+<!-- Onboarding wizard — shown when no saved preferences exist -->
+<div class="onboard-overlay" id="onboard">
+  <div class="onboard-card">
+    <span class="onboard-eyebrow">Rental finder · Setup</span>
+
+    <div class="onboard-step active" data-step="0">
+      <h2 class="onboard-title">Which city are you renting in?</h2>
+      <div class="onboard-sub">Pick a city or search for any other Indian city.</div>
+      <div class="onboard-chips" id="obCityChips">
+        <button type="button" class="onboard-chip" data-city="Noida" data-lat="28.5355" data-lng="77.3910">Noida</button>
+        <button type="button" class="onboard-chip" data-city="Gurgaon" data-lat="28.4595" data-lng="77.0266">Gurgaon</button>
+        <button type="button" class="onboard-chip" data-city="Delhi" data-lat="28.6139" data-lng="77.2090">Delhi</button>
+        <button type="button" class="onboard-chip" data-city="Bangalore" data-lat="12.9716" data-lng="77.5946">Bangalore</button>
+        <button type="button" class="onboard-chip" data-city="Mumbai" data-lat="19.0760" data-lng="72.8777">Mumbai</button>
+        <button type="button" class="onboard-chip" data-city="Pune" data-lat="18.5204" data-lng="73.8567">Pune</button>
+        <button type="button" class="onboard-chip" data-city="Hyderabad" data-lat="17.3850" data-lng="78.4867">Hyderabad</button>
+        <button type="button" class="onboard-chip" data-city="Chennai" data-lat="13.0827" data-lng="80.2707">Chennai</button>
+      </div>
+      <div class="onboard-input-row">
+        <input type="text" class="onboard-input" id="obCityInput" placeholder="Or type another city…" autocomplete="off" />
+        <button type="button" class="onboard-search-btn" id="obCitySearch">Search</button>
+      </div>
+      <div class="onboard-results" id="obCityResults"></div>
+      <div class="onboard-hint">Noida gets our hand-curated dataset of 90+ societies with rents &amp; ratings. Other cities load residential complexes from OpenStreetMap.</div>
+    </div>
+
+    <div class="onboard-step" data-step="1">
+      <h2 class="onboard-title">Where's your office?</h2>
+      <div class="onboard-sub">We'll center the map here and show commute distance + drive time to every society.</div>
+      <div class="onboard-input-row">
+        <input type="text" class="onboard-input" id="obOfficeInput" placeholder="Company name, building or area…" autocomplete="off" />
+        <button type="button" class="onboard-search-btn" id="obOfficeSearch">Search</button>
+      </div>
+      <div class="onboard-results" id="obOfficeResults"></div>
+      <div class="onboard-hint">Tip: search a landmark or office park if your exact office doesn't show up.</div>
+    </div>
+
+    <div class="onboard-step" data-step="2">
+      <h2 class="onboard-title">What's your monthly budget?</h2>
+      <div class="onboard-sub">We'll pre-filter the map to match (you can change it anytime).</div>
+      <div class="onboard-chips" id="obBudgetChips">
+        <button type="button" class="onboard-chip" data-budget="lt25">Under ₹25k</button>
+        <button type="button" class="onboard-chip" data-budget="25-45">₹25k–45k</button>
+        <button type="button" class="onboard-chip" data-budget="45-80">₹45k–80k</button>
+        <button type="button" class="onboard-chip" data-budget="80p">₹80k+</button>
+        <button type="button" class="onboard-chip selected" data-budget="all">No limit</button>
+      </div>
+    </div>
+
+    <div class="onboard-step" data-step="3">
+      <h2 class="onboard-title">How many bedrooms?</h2>
+      <div class="onboard-sub">Pick all that work — listing searches will be filtered to these configs.</div>
+      <div class="onboard-chips" id="obBhkChips">
+        <button type="button" class="onboard-chip" data-bhk="1">1 BHK</button>
+        <button type="button" class="onboard-chip" data-bhk="2">2 BHK</button>
+        <button type="button" class="onboard-chip selected" data-bhk="3">3 BHK</button>
+        <button type="button" class="onboard-chip" data-bhk="4">4 BHK</button>
+      </div>
+    </div>
+
+    <div class="onboard-nav">
+      <button type="button" class="onboard-back" id="obBack" style="visibility:hidden">← Back</button>
+      <div class="onboard-dots" id="obDots">
+        <span class="onboard-dot active"></span><span class="onboard-dot"></span><span class="onboard-dot"></span><span class="onboard-dot"></span>
+      </div>
+      <button type="button" class="onboard-next" id="obNext" disabled>Next →</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
   integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-// =============== DATA ===============
-const OFFICE = {
+// =============== USER PREFERENCES ===============
+// Saved by the onboarding wizard. When present, the map personalizes to the
+// user's city / office / budget / BHK. When absent, the onboarding overlay
+// shows and the map defaults to the curated Noida experience underneath.
+const PREFS_KEY = 'rentmap_prefs_v1';
+function loadPrefs() {
+  try { return JSON.parse(localStorage.getItem(PREFS_KEY) || 'null'); }
+  catch (e) { return null; }
+}
+const PREFS = loadPrefs();
+
+const DEFAULT_OFFICE = {
   name: "Leverage Edu",
   address: "3rd Floor, Plot 1/C, Raipur Khadar, Sector 126, Noida 201313",
   lat: 28.5409, lng: 77.3886
 };
 
-const SOCIETIES = [
+const OFFICE = (PREFS && PREFS.office && typeof PREFS.office.lat === 'number')
+  ? { name: PREFS.office.name || 'My office', address: PREFS.office.address || '', lat: PREFS.office.lat, lng: PREFS.office.lng }
+  : DEFAULT_OFFICE;
+
+const CITY_NAME = (PREFS && PREFS.city && PREFS.city.name) ? PREFS.city.name : 'Noida';
+// Curated mode = the hand-researched Noida dataset (societies, rents, ratings).
+// Any other city loads residential complexes dynamically from OpenStreetMap.
+const IS_CURATED = /noida/i.test(CITY_NAME);
+const USER_BHKS = (PREFS && Array.isArray(PREFS.bhks) && PREFS.bhks.length) ? PREFS.bhks : ['3', '4'];
+const USER_BUDGET = (PREFS && PREFS.budget) ? PREFS.budget : 'all';
+const BHK_LABEL = USER_BHKS.join('/') + ' BHK';
+
+// =============== DATA ===============
+const CURATED_SOCIETIES = [
   { name: "Jaypee Greens Wish Town – Pavilion Court", sector: "Sector 128", area: "sec128",
     lat: 28.5288, lng: 77.4038, band: "ultra", rent: "₹70k–1.5L", bhk: "3/4 BHK",
     notes: "Marquee Jaypee development. Golf course, large green campus. Metro: Sector 137 (~3 km)." },
@@ -2039,6 +2328,60 @@ const SOCIETIES = [
     notes: "ACE Group premium project in Sec 150. 75% open green, golf-themed landscaping, large clubhouse + sports facilities. Well-rated maintenance." }
 ];
 
+// Active dataset: curated for Noida, dynamically loaded (OpenStreetMap) elsewhere.
+const SOCIETIES = IS_CURATED ? CURATED_SOCIETIES : [];
+
+// Fetch named apartment complexes near the office from OpenStreetMap Overpass.
+async function loadDynamicSocieties() {
+  const radius = 8000; // 8 km around the office
+  const q = `[out:json][timeout:25];(way["building"="apartments"]["name"](around:${radius},${OFFICE.lat},${OFFICE.lng});relation["building"="apartments"]["name"](around:${radius},${OFFICE.lat},${OFFICE.lng});way["residential"="apartments"]["name"](around:${radius},${OFFICE.lat},${OFFICE.lng}););out center 120;`;
+  const endpoints = [
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://lz4.overpass-api.de/api/interpreter',
+    'https://overpass-api.de/api/interpreter'
+  ];
+  let data = null;
+  for (const ep of endpoints) {
+    try {
+      const r = await fetch(ep, {
+        method: 'POST',
+        body: 'data=' + encodeURIComponent(q),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      });
+      if (r.ok) { data = await r.json(); if (data && data.elements) break; }
+    } catch (e) { /* try next mirror */ }
+  }
+  if (!data || !Array.isArray(data.elements)) {
+    console.warn('[dynamic] Overpass failed on all mirrors');
+    return 0;
+  }
+  const seen = new Set();
+  const found = [];
+  data.elements.forEach(el => {
+    const name = el.tags && el.tags.name;
+    const c = el.center || el;
+    if (!name || typeof c.lat !== 'number' || seen.has(name.toLowerCase())) return;
+    seen.add(name.toLowerCase());
+    found.push({
+      name: name,
+      sector: CITY_NAME,
+      area: 'all',
+      lat: c.lat, lng: c.lon,
+      band: 'premium',
+      rent: '—',
+      bhk: BHK_LABEL,
+      status: 'ready',
+      dynamic: true,
+      notes: 'Residential complex from OpenStreetMap. Rent, photos and reviews via the listings page — data coverage varies by city.'
+    });
+  });
+  // Closest 60 to keep the map readable
+  found.forEach(s => s._d = haversine(OFFICE.lat, OFFICE.lng, s.lat, s.lng));
+  found.sort((a, b) => a._d - b._d);
+  SOCIETIES.push(...found.slice(0, 60));
+  return SOCIETIES.length;
+}
+
 // =============== RATINGS ===============
 // Per-society build quality + community reviews (0-10 each)
 // Defaults to {build:6, reviews:6} if not listed (assumed average)
@@ -2219,7 +2562,7 @@ function ratingColor(score) {
 const AQICN_TOKEN = 'b7c4bf225d95fd171151e01e5f5676cedabeb4cf';
 const AQI_POLL_MS = 10 * 60 * 1000; // re-fetch every 10 minutes
 
-const AQI_STATIONS = [
+const NOIDA_AQI_STATIONS = [
   { name: "Sector 1, Noida",              idx: 12466, lat: 28.5836, lng: 77.3158, fallbackAqi: 180 },
   { name: "Sector 62, Noida",             idx: 11865, lat: 28.6276, lng: 77.3658, fallbackAqi: 200 },
   { name: "Sector 116, Noida",            idx: 12465, lat: 28.5683, lng: 77.3947, fallbackAqi: 220 },
@@ -2227,7 +2570,45 @@ const AQI_STATIONS = [
   { name: "Knowledge Park III, Gr Noida", idx: 11278, lat: 28.4737, lng: 77.4853, fallbackAqi: 130 },
   { name: "Knowledge Park V, Gr Noida",   idx: 12463, lat: 28.4773, lng: 77.4824, fallbackAqi: 240 }
 ];
+// Curated mode uses the known Noida stations; other cities discover stations
+// dynamically from AQICN's map-bounds API around the office.
+const AQI_STATIONS = IS_CURATED ? NOIDA_AQI_STATIONS : [];
 AQI_STATIONS.forEach(s => { s.aqi = s.fallbackAqi; s.live = false; s.pm25 = null; s.pm10 = null; s.dataTime = null; s.source = null; });
+
+// Discover AQI monitoring stations near the office in any city.
+async function loadDynamicAqiStations() {
+  if (!AQICN_TOKEN) return 0;
+  const d = 0.2; // ~22 km box
+  const url = `https://api.waqi.info/v2/map/bounds?latlng=${OFFICE.lat - d},${OFFICE.lng - d},${OFFICE.lat + d},${OFFICE.lng + d}&networks=all&token=${AQICN_TOKEN}`;
+  try {
+    const r = await fetch(url);
+    const j = await r.json();
+    if (!j || j.status !== 'ok' || !Array.isArray(j.data)) throw new Error('bad response');
+    const found = j.data
+      .map(s => ({
+        name: (s.station && s.station.name || 'AQI station').split(',').slice(0, 2).join(','),
+        idx: s.uid,
+        lat: s.lat, lng: s.lon,
+        aqiNow: parseInt(s.aqi, 10)
+      }))
+      .filter(s => !isNaN(s.aqiNow))
+      .map(s => { s._d = haversine(OFFICE.lat, OFFICE.lng, s.lat, s.lng); return s; })
+      .sort((a, b) => a._d - b._d)
+      .slice(0, 8);
+    found.forEach(s => {
+      AQI_STATIONS.push({
+        name: s.name, idx: s.idx, lat: s.lat, lng: s.lng,
+        fallbackAqi: s.aqiNow, aqi: s.aqiNow, live: true, unit: 'aqi',
+        pm25: null, pm10: null, dataTime: null,
+        source: 'Ground station · AQICN'
+      });
+    });
+    return found.length;
+  } catch (e) {
+    console.warn('[aqi] dynamic station discovery failed:', e.message);
+    return 0;
+  }
+}
 
 // CPCB India PM2.5 → AQI conversion (24-hour avg breakpoints)
 function pm25ToCpcbAqi(pm) {
@@ -2362,6 +2743,7 @@ async function fetchLiveAQI(station) {
 }
 
 function aqiSectionHTML(soc) {
+  if (AQI_STATIONS.length === 0) return '';
   const { station, distKm } = nearestAqiStation(soc.lat, soc.lng);
   const cat = aqiCategory(station.aqi);
   const tag = station.live ? '<span class="aqi-live-tag">LIVE</span>' : '<span class="aqi-typical-tag">typical</span>';
@@ -2405,13 +2787,14 @@ L.control.layers({
 }, null, { position: 'topright', collapsed: false }).addTo(map);
 
 // Office marker
+const officeLabel = OFFICE.name.length > 22 ? OFFICE.name.slice(0, 20) + '…' : OFFICE.name;
 const officeIcon = L.divIcon({
   className: '',
   html: `<div class="office-marker">
     <span class="office-icon">
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/><path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/></svg>
     </span>
-    Leverage Edu
+    ${officeLabel}
   </div>`,
   iconSize: [150, 32],
   iconAnchor: [75, 38]
@@ -2560,7 +2943,8 @@ function societyImageUrl(soc) {
 }
 
 function googleImagesUrl(soc) {
-  return `https://www.google.com/search?q=${encodeURIComponent(soc.name + ' ' + soc.sector + ' Noida')}&tbm=isch`;
+  const place = soc.sector === CITY_NAME ? CITY_NAME : soc.sector + ' ' + CITY_NAME;
+  return `https://www.google.com/search?q=${encodeURIComponent(soc.name + ' ' + place)}&tbm=isch`;
 }
 
 function popupImageHTML(soc) {
@@ -2591,7 +2975,9 @@ function listingsUrl(soc) {
     band: soc.band,
     bhk: soc.bhk,
     rent: soc.rent,
-    status: soc.status || 'ready'
+    status: soc.status || 'ready',
+    city: CITY_NAME,
+    userBhk: USER_BHKS.join(',')
   });
   return `listings.html?${params.toString()}`;
 }
@@ -2599,9 +2985,9 @@ function listingsUrl(soc) {
 function listingsCTA(soc) {
   return `<a class="listings-cta" href="${listingsUrl(soc)}" target="_blank" rel="noopener">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-    View 3/4 BHK listings
+    View ${BHK_LABEL} listings
   </a>
-  <div class="listings-cta-sub">Filtered to <b>3 BHK / 4 BHK only</b> across NoBroker · MagicBricks · 99acres · SquareYards · Housing.com</div>`;
+  <div class="listings-cta-sub">Filtered to <b>${BHK_LABEL} only</b> across NoBroker · MagicBricks · 99acres · SquareYards · Housing.com</div>`;
 }
 
 function statusBadge(status) {
@@ -2730,13 +3116,17 @@ map.removeLayer = function(layer) {
   return origRemoveLayer(layer);
 };
 
-// Plot markers
-SOCIETIES.forEach(soc => {
-  const m = L.marker([soc.lat, soc.lng], { icon: makeSocietyIcon(soc.band) }).addTo(map);
-  m.bindPopup(buildPopupHTML(soc, null), POPUP_OPTS);
-  m.on('click', () => selectSociety(soc));
-  markers[soc.name] = m;
-});
+// Plot markers (idempotent — safe to call again after dynamic data loads)
+function plotSocieties() {
+  SOCIETIES.forEach(soc => {
+    if (markers[soc.name]) return;
+    const m = L.marker([soc.lat, soc.lng], { icon: makeSocietyIcon(soc.band) }).addTo(map);
+    m.bindPopup(buildPopupHTML(soc, null), POPUP_OPTS);
+    m.on('click', () => selectSociety(soc));
+    markers[soc.name] = m;
+  });
+}
+plotSocieties();
 
 // =============== AQI STATION MARKERS ===============
 const aqiMarkers = {};
@@ -2786,19 +3176,23 @@ function refreshAqiMarker(station) {
     );
   }
 }
-AQI_STATIONS.forEach(station => {
-  const m = L.marker([station.lat, station.lng], { icon: makeAqiIcon(station), zIndexOffset: 500 }).addTo(map);
-  const cat = aqiCategory(station.aqi);
-  m.bindPopup(
-    `<div class="popup-card" style="min-width:200px">
-      <div class="popup-title">${station.name}</div>
-      <div class="popup-sector">CPCB monitoring station</div>
-    </div>`,
-    { maxWidth: 260 }
-  );
-  aqiMarkers[station.name] = m;
-  refreshAqiMarker(station);
-});
+// Idempotent — safe to call again after dynamic stations load
+function plotAqiStations() {
+  AQI_STATIONS.forEach(station => {
+    if (aqiMarkers[station.name]) return;
+    const m = L.marker([station.lat, station.lng], { icon: makeAqiIcon(station), zIndexOffset: 500 }).addTo(map);
+    m.bindPopup(
+      `<div class="popup-card" style="min-width:200px">
+        <div class="popup-title">${station.name}</div>
+        <div class="popup-sector">Monitoring station</div>
+      </div>`,
+      { maxWidth: 260 }
+    );
+    aqiMarkers[station.name] = m;
+    refreshAqiMarker(station);
+  });
+}
+plotAqiStations();
 
 // Toggle AQI overlay
 const aqiToggle = document.getElementById('aqiToggle');
@@ -2807,6 +3201,7 @@ function setAqiVisible(visible) {
   aqiVisible = visible;
   document.body.classList.toggle('aqi-hidden', !visible);
   AQI_STATIONS.forEach(s => {
+    if (!aqiMarkers[s.name]) return;
     if (visible) aqiMarkers[s.name].addTo(map);
     else map.removeLayer(aqiMarkers[s.name]);
   });
@@ -2840,6 +3235,28 @@ async function refreshAllAQI() {
 }
 refreshAllAQI();
 setInterval(refreshAllAQI, AQI_POLL_MS);
+
+// =============== DYNAMIC CITY BOOT ===============
+// In non-curated cities, discover societies (OpenStreetMap) and AQI stations
+// (AQICN bounds) around the office, then plot everything.
+if (!IS_CURATED) {
+  document.body.classList.add('dynamic-mode');
+  (async () => {
+    const [socCount, aqiCount] = await Promise.all([
+      loadDynamicSocieties(),
+      loadDynamicAqiStations()
+    ]);
+    plotSocieties();
+    plotAqiStations();
+    refreshAllAQI();
+    if (typeof renderList === 'function') renderList();
+    if (SOCIETIES.length > 0) {
+      const coords = [[OFFICE.lat, OFFICE.lng], ...SOCIETIES.map(s => [s.lat, s.lng])];
+      map.fitBounds(coords, { padding: [60, 60] });
+    }
+    console.log(`[dynamic] ${CITY_NAME}: ${socCount || 0} complexes, ${aqiCount || 0} AQI stations`);
+  })();
+}
 
 // =============== SIDEBAR ===============
 const listEl = document.getElementById('list');
@@ -3019,8 +3436,13 @@ document.getElementById('resetBtn').addEventListener('click', () => {
 });
 
 renderList();
-const allCoords = [[OFFICE.lat, OFFICE.lng], ...SOCIETIES.map(s => [s.lat, s.lng])];
-map.fitBounds(allCoords, { padding: [60, 60] });
+if (SOCIETIES.length > 0) {
+  const allCoords = [[OFFICE.lat, OFFICE.lng], ...SOCIETIES.map(s => [s.lat, s.lng])];
+  map.fitBounds(allCoords, { padding: [60, 60] });
+} else {
+  // Dynamic mode boots with no societies yet — center on the office
+  map.setView([OFFICE.lat, OFFICE.lng], 13);
+}
 
 // ============== Mobile bottom-sheet behavior ==============
 (function setupBottomSheet() {
@@ -3145,6 +3567,183 @@ map.fitBounds(allCoords, { padding: [60, 60] });
 
   // Fire renderList to populate initial chip/count via the event
   renderList();
+})();
+
+// =============== HEADER PERSONALIZATION ===============
+(function personalizeHeader() {
+  document.title = `${CITY_NAME} Rental Map — near ${OFFICE.name}`;
+  const eyebrow = document.getElementById('headerEyebrow');
+  const officeEl = document.getElementById('headerOffice');
+  if (eyebrow) eyebrow.textContent = 'Live · ' + CITY_NAME;
+  if (officeEl) officeEl.textContent = OFFICE.name;
+
+  // Budget → pre-select the matching price-band pill (curated mode only)
+  if (IS_CURATED && PREFS && USER_BUDGET !== 'all') {
+    const bandFor = { 'lt25': 'mid', '25-45': 'mid', '45-80': 'premium', '80p': 'ultra' };
+    const band = bandFor[USER_BUDGET];
+    const pill = band && document.querySelector(`#bandPills .pill[data-band="${band}"]`);
+    if (pill) pill.click();
+  }
+})();
+
+// =============== ONBOARDING WIZARD ===============
+(function setupOnboarding() {
+  const overlay = document.getElementById('onboard');
+  if (!overlay) return;
+  const steps = overlay.querySelectorAll('.onboard-step');
+  const dots = overlay.querySelectorAll('.onboard-dot');
+  const backBtn = document.getElementById('obBack');
+  const nextBtn = document.getElementById('obNext');
+  let step = 0;
+  const state = {
+    city: PREFS && PREFS.city ? { ...PREFS.city } : null,
+    office: PREFS && PREFS.office ? { ...PREFS.office } : null,
+    budget: PREFS && PREFS.budget ? PREFS.budget : 'all',
+    bhks: PREFS && Array.isArray(PREFS.bhks) && PREFS.bhks.length ? [...PREFS.bhks] : ['3']
+  };
+
+  function stepValid() {
+    if (step === 0) return !!state.city;
+    if (step === 1) return !!state.office;
+    if (step === 2) return !!state.budget;
+    if (step === 3) return state.bhks.length > 0;
+    return false;
+  }
+  function render() {
+    steps.forEach(s => s.classList.toggle('active', parseInt(s.dataset.step, 10) === step));
+    dots.forEach((d, i) => d.classList.toggle('active', i === step));
+    backBtn.style.visibility = step === 0 ? 'hidden' : 'visible';
+    nextBtn.textContent = step === 3 ? 'Show my map →' : 'Next →';
+    nextBtn.disabled = !stepValid();
+  }
+
+  async function geocode(query) {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=0&limit=5&q=${encodeURIComponent(query)}`;
+    const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!r.ok) throw new Error('geocode http ' + r.status);
+    return r.json();
+  }
+  function shortName(displayName) {
+    return displayName.split(',').slice(0, 3).join(',');
+  }
+  function renderResults(el, items, onPick) {
+    el.innerHTML = '';
+    if (!items.length) {
+      el.innerHTML = '<div class="onboard-hint">No results — try a simpler search (e.g. just the area or landmark name).</div>';
+      return;
+    }
+    items.forEach(item => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'onboard-result';
+      btn.innerHTML = `<b>${shortName(item.display_name)}</b>${item.display_name.split(',').slice(3, 6).join(',')}`;
+      btn.addEventListener('click', () => {
+        el.querySelectorAll('.onboard-result').forEach(x => x.classList.remove('selected'));
+        btn.classList.add('selected');
+        onPick(item);
+        render();
+      });
+      el.appendChild(btn);
+    });
+  }
+
+  // --- Step 0: city ---
+  document.querySelectorAll('#obCityChips .onboard-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#obCityChips .onboard-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      state.city = { name: chip.dataset.city, lat: parseFloat(chip.dataset.lat), lng: parseFloat(chip.dataset.lng) };
+      document.getElementById('obCityResults').innerHTML = '';
+      render();
+    });
+  });
+  document.getElementById('obCitySearch').addEventListener('click', async () => {
+    const q = document.getElementById('obCityInput').value.trim();
+    if (!q) return;
+    const btn = document.getElementById('obCitySearch');
+    btn.disabled = true;
+    try {
+      const results = await geocode(q + ', India');
+      renderResults(document.getElementById('obCityResults'), results, (item) => {
+        document.querySelectorAll('#obCityChips .onboard-chip').forEach(c => c.classList.remove('selected'));
+        state.city = { name: q.replace(/\b\w/g, c => c.toUpperCase()), lat: parseFloat(item.lat), lng: parseFloat(item.lon) };
+      });
+    } catch (e) {
+      document.getElementById('obCityResults').innerHTML = '<div class="onboard-hint">Search failed — check your connection and try again.</div>';
+    }
+    btn.disabled = false;
+  });
+
+  // --- Step 1: office ---
+  document.getElementById('obOfficeSearch').addEventListener('click', async () => {
+    const q = document.getElementById('obOfficeInput').value.trim();
+    if (!q || !state.city) return;
+    const btn = document.getElementById('obOfficeSearch');
+    btn.disabled = true;
+    try {
+      const results = await geocode(`${q}, ${state.city.name}, India`);
+      renderResults(document.getElementById('obOfficeResults'), results, (item) => {
+        state.office = {
+          name: q,
+          address: shortName(item.display_name),
+          lat: parseFloat(item.lat),
+          lng: parseFloat(item.lon)
+        };
+      });
+    } catch (e) {
+      document.getElementById('obOfficeResults').innerHTML = '<div class="onboard-hint">Search failed — check your connection and try again.</div>';
+    }
+    btn.disabled = false;
+  });
+  // Enter key triggers search
+  document.getElementById('obCityInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('obCitySearch').click(); }
+  });
+  document.getElementById('obOfficeInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('obOfficeSearch').click(); }
+  });
+
+  // --- Step 2: budget (single-select) ---
+  document.querySelectorAll('#obBudgetChips .onboard-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#obBudgetChips .onboard-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      state.budget = chip.dataset.budget;
+      render();
+    });
+  });
+
+  // --- Step 3: BHK (multi-select) ---
+  document.querySelectorAll('#obBhkChips .onboard-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('selected');
+      state.bhks = [...document.querySelectorAll('#obBhkChips .onboard-chip.selected')].map(c => c.dataset.bhk);
+      render();
+    });
+  });
+
+  // --- Nav ---
+  backBtn.addEventListener('click', () => { if (step > 0) { step--; render(); } });
+  nextBtn.addEventListener('click', () => {
+    if (!stepValid()) return;
+    if (step < 3) { step++; render(); return; }
+    // Finish: persist + reload so the whole app boots with the new prefs
+    localStorage.setItem(PREFS_KEY, JSON.stringify({
+      city: state.city,
+      office: state.office,
+      budget: state.budget,
+      bhks: state.bhks,
+      savedAt: new Date().toISOString()
+    }));
+    location.reload();
+  });
+
+  // Show on first visit; reopen via the header button
+  if (!PREFS) overlay.classList.add('show');
+  const editBtn = document.getElementById('editPrefsBtn');
+  if (editBtn) editBtn.addEventListener('click', () => { step = 0; render(); overlay.classList.add('show'); });
+
+  render();
 })();
 </script>
 </body>
