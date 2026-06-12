@@ -2099,6 +2099,14 @@ const OFFICE = (PREFS && PREFS.office && typeof PREFS.office.lat === 'number')
   ? { name: PREFS.office.name || 'My office', address: PREFS.office.address || '', lat: PREFS.office.lat, lng: PREFS.office.lng }
   : DEFAULT_OFFICE;
 
+// Google Places API (New) key — used for office search AND society discovery in
+// dynamic cities. Requires, in Google Cloud Console (project 353498502811):
+//   1. Billing enabled on the project
+//   2. "Places API (New)" enabled: https://console.developers.google.com/apis/api/places.googleapis.com/overview?project=353498502811
+//   3. Recommended: restrict the key to HTTP referrer https://nikhiljvibe.github.io/*
+// Until then, all Google calls fail soft and the app falls back to OSM sources.
+const GOOGLE_MAPS_API_KEY = 'AIzaSyCTfkuawIPnthzWEn91PUXFvielrggeE34';
+
 const CITY_NAME = (PREFS && PREFS.city && PREFS.city.name) ? PREFS.city.name : 'Noida';
 // Curated mode = the hand-researched Noida dataset (societies, rents, ratings).
 // Any other city loads residential complexes dynamically from OpenStreetMap.
@@ -2472,18 +2480,53 @@ async function overpassQuery(q) {
 
 // Major Indian developers — complexes matching these get priority placement,
 // the ultra band, and stronger default build/review ratings.
-const PREMIUM_BRANDS = /\b(prestige|sobha|brigade|puravankara|purva|lodha|godrej|dlf|salarpuria|sattva|mantri|shriram|provident|embassy|total environment|adarsh|century|bhartiya|assetz|vaishnavi|mahindra|tata|hiranandani|oberoi|raheja|runwal|kalpataru|piramal|rustomjee|kolte[- ]?patil|vtp|gera|paranjape|my home|aparna|casagrand|ats|jaypee|mahagun|supertech|eldeco|m3m|emaar|vatika|ireo|experion|signature global|birla|sunteck|wadhwa|ajmera|prateek|gaur)\b/i;
+// Covers Bangalore (Prestige/Sobha/SNN/Nitesh/Divyasree/…), Mumbai
+// (Lodha/Hiranandani/Dosti/Kanakia/Sheth/…), NCR (DLF/M3M/ATS/Bestech/…).
+const PREMIUM_BRANDS = /\b(prestige|sobha|brigade|puravankara|purva|lodha|godrej|dlf|salarpuria|sattva|mantri|shriram|provident|embassy|total environment|adarsh|century|bhartiya|assetz|vaishnavi|mahindra|tata|hiranandani|oberoi|raheja|runwal|kalpataru|piramal|rustomjee|kolte[- ]?patil|vtp|gera|paranjape|my home|aparna|casagrand|ats|jaypee|mahagun|supertech|eldeco|m3m|emaar|vatika|ireo|experion|signature global|birla|sunteck|wadhwa|ajmera|prateek|gaur|snn|nitesh|mana|vajram|rohan|divyasree|rmz|ozone|nambiar|skylark|golden gate|sterling|salarpuria|dosti|kanakia|chandak|ruparel|sheth|marathon|shapoorji|jp infra|bestech|unitech|ansal|pioneer|conscient|central park|paras|tulip|smartworld|krisumi|adani|l\s*&\s*t)\b/i;
+
+// Indicative monthly rent ranges (₹ thousands) by city and BHK — 2026 market
+// ballparks for standard societies; branded developments multiply ~1.35x.
+// Clearly labelled "(est.)" in the UI — verify on the listing sites.
+const CITY_RENT_MATRIX = {
+  'bangalore': { 1: [18, 30], 2: [28, 50], 3: [45, 85],  4: [70, 140] },
+  'bengaluru': { 1: [18, 30], 2: [28, 50], 3: [45, 85],  4: [70, 140] },
+  'mumbai':    { 1: [35, 60], 2: [60, 110], 3: [100, 200], 4: [180, 350] },
+  'gurgaon':   { 1: [20, 35], 2: [35, 60], 3: [55, 100], 4: [90, 180] },
+  'gurugram':  { 1: [20, 35], 2: [35, 60], 3: [55, 100], 4: [90, 180] },
+  'delhi':     { 1: [18, 35], 2: [30, 60], 3: [50, 95],  4: [80, 160] },
+  'pune':      { 1: [15, 28], 2: [25, 45], 3: [40, 70],  4: [60, 120] },
+  'hyderabad': { 1: [15, 28], 2: [25, 45], 3: [40, 75],  4: [65, 130] },
+  'chennai':   { 1: [14, 25], 2: [22, 40], 3: [35, 65],  4: [55, 110] },
+  '_default':  { 1: [15, 28], 2: [25, 45], 3: [40, 70],  4: [60, 120] }
+};
+
+function fmtRentK(k) {
+  return k >= 100 ? (k / 100).toFixed(k % 100 === 0 ? 0 : 1) + 'L' : Math.round(k) + 'k';
+}
+
+// Range across the user's chosen BHKs; branded gets a ~1.35x premium.
+function estimateRentRange(branded) {
+  const matrix = CITY_RENT_MATRIX[CITY_NAME.toLowerCase()] || CITY_RENT_MATRIX['_default'];
+  const bhkNums = USER_BHKS.map(b => parseInt(b, 10)).filter(b => matrix[b]);
+  if (!bhkNums.length) return '—';
+  let lo = Math.min(...bhkNums.map(b => matrix[b][0]));
+  let hi = Math.max(...bhkNums.map(b => matrix[b][1]));
+  if (branded) { lo = Math.round(lo * 1.35 / 5) * 5; hi = Math.round(hi * 1.35 / 5) * 5; }
+  return `₹${fmtRentK(lo)}–${fmtRentK(hi)} (est.)`;
+}
 
 async function loadDynamicSocieties() {
-  const radius = 10000; // 10 km around the office
+  const radius = 13000; // 13 km — wide enough to catch outer-ring premium projects
   const listEl = document.getElementById('list');
   if (listEl) listEl.innerHTML = '<div style="padding:20px 8px;font-size:12.5px;color:var(--ink-muted);text-align:center">Finding residential complexes near your office…<br><span style="font-size:11px">(OpenStreetMap data, usually 5–15 seconds)</span></div>';
 
-  // One combined query: apartment buildings + named residential areas.
-  // Branded societies (Prestige/Sobha/Lodha/…) are frequently mapped as
-  // landuse=residential areas rather than building=apartments, so querying
-  // both is what surfaces the premium developments.
-  const combinedQuery = `[out:json][timeout:30];(way["building"="apartments"]["name"](around:${radius},${OFFICE.lat},${OFFICE.lng});relation["building"="apartments"]["name"](around:${radius},${OFFICE.lat},${OFFICE.lng});way["landuse"="residential"]["name"](around:${radius},${OFFICE.lat},${OFFICE.lng});relation["landuse"="residential"]["name"](around:${radius},${OFFICE.lat},${OFFICE.lng}););out center 300;`;
+  // One combined query across the three tagging styles used for Indian societies:
+  //   building=apartments  — most apartment towers
+  //   landuse=residential  — gated communities mapped as named areas
+  //                          (how Prestige/Sobha/Hiranandani etc. are usually tagged)
+  //   building=residential — catch-all many complexes end up under
+  const around = `(around:${radius},${OFFICE.lat},${OFFICE.lng})`;
+  const combinedQuery = `[out:json][timeout:30];(way["building"="apartments"]["name"]${around};relation["building"="apartments"]["name"]${around};way["landuse"="residential"]["name"]${around};relation["landuse"="residential"]["name"]${around};way["building"="residential"]["name"]${around};relation["building"="residential"]["name"]${around};);out center 400;`;
   const data = await overpassQuery(combinedQuery);
 
   if (!data) {
@@ -2503,32 +2546,119 @@ async function loadDynamicSocieties() {
     if (genericName.test(name.trim())) return;
     seen.add(name.toLowerCase());
     const branded = PREMIUM_BRANDS.test(name);
+    // Tagging-quality tier: apartments/landuse entries are almost always real
+    // complexes; building=residential is noisier (can be a single named house).
+    const tags = el.tags;
+    const tier1 = tags.building === 'apartments' || tags.landuse === 'residential';
     found.push({
       name: name,
       sector: CITY_NAME,
       area: 'all',
       lat: c.lat, lng: c.lon,
       band: branded ? 'ultra' : 'premium',
-      rent: '—',
+      rent: estimateRentRange(branded),
       bhk: BHK_LABEL,
       status: 'ready',
       dynamic: true,
       branded: branded,
+      _tier1: tier1,
       notes: branded
-        ? 'Development by a major national builder (matched from OpenStreetMap). Typically premium construction and amenities — verify rent and availability via the listings page.'
-        : 'Residential complex from OpenStreetMap. Rent, photos and reviews via the listings page — data coverage varies by city.'
+        ? 'Development by a major national builder (matched from OpenStreetMap). Rent shown is the city-typical range for this segment (estimate) — verify on the listings page.'
+        : 'Residential complex from OpenStreetMap. Rent shown is the city-typical range (estimate) — verify on the listings page.'
     });
     // Reputable-developer prior for the rating index
     if (branded) RATINGS[name] = { build: 8, reviews: 8 };
   });
 
-  // Branded premium first (by distance), then the rest (by distance); cap 80.
+  // Quality sort: branded first, then well-tagged complexes, then by distance; cap 100.
   found.forEach(s => s._d = haversine(OFFICE.lat, OFFICE.lng, s.lat, s.lng));
-  found.sort((a, b) => (b.branded - a.branded) || (a._d - b._d));
-  SOCIETIES.push(...found.slice(0, 80));
+  found.sort((a, b) => (b.branded - a.branded) || (b._tier1 - a._tier1) || (a._d - b._d));
+  SOCIETIES.push(...found.slice(0, 100));
   const brandedCount = SOCIETIES.filter(s => s.branded).length;
   console.log(`[dynamic] ${SOCIETIES.length} societies (${brandedCount} branded premium)`);
   return SOCIETIES.length;
+}
+
+// Supplement OSM with Google Places — Google's index has the societies OSM
+// misses entirely (verified: House of Hiranandani, Queensgate, Club Meadows,
+// SNN Raj, Prestige Song of the South have NO OSM features in Bangalore).
+// Fails soft (returns 0) until billing + Places API (New) are enabled on the
+// key's Cloud project; lights up automatically once they are.
+async function loadGooglePlacesSocieties() {
+  if (!GOOGLE_MAPS_API_KEY) return 0;
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Goog-Api-Key': GOOGLE_MAPS_API_KEY,
+    'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.location'
+  };
+  const center = { latitude: OFFICE.lat, longitude: OFFICE.lng };
+  const requests = [
+    // Typed nearby search — apartment complexes ranked by distance
+    fetch('https://places.googleapis.com/v1/places:searchNearby', {
+      method: 'POST', headers,
+      body: JSON.stringify({
+        includedTypes: ['apartment_complex', 'apartment_building', 'condominium_complex'],
+        maxResultCount: 20,
+        rankPreference: 'DISTANCE',
+        locationRestriction: { circle: { center, radius: 13000 } }
+      })
+    }),
+    // Text search catches branded names the type taxonomy misses
+    fetch('https://places.googleapis.com/v1/places:searchText', {
+      method: 'POST', headers,
+      body: JSON.stringify({
+        textQuery: `premium apartment society in ${CITY_NAME}`,
+        maxResultCount: 20,
+        locationBias: { circle: { center, radius: 13000 } }
+      })
+    })
+  ];
+  let places = [];
+  for (const p of requests) {
+    try {
+      const r = await p;
+      if (!r.ok) { console.warn('[google-places] http', r.status, '— enable billing + Places API (New) to activate'); continue; }
+      const j = await r.json();
+      places.push(...(j.places || []));
+    } catch (e) { console.warn('[google-places]', e.message); }
+  }
+  if (!places.length) return 0;
+
+  const normalize = (n) => n.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const existing = new Set(SOCIETIES.map(s => normalize(s.name)));
+  let added = 0;
+  places.forEach(p => {
+    const name = p.displayName && p.displayName.text;
+    if (!name || !p.location) return;
+    const key = normalize(name);
+    if (existing.has(key)) return;
+    existing.add(key);
+    const branded = PREMIUM_BRANDS.test(name);
+    const soc = {
+      name: name,
+      sector: CITY_NAME,
+      area: 'all',
+      lat: p.location.latitude, lng: p.location.longitude,
+      band: branded ? 'ultra' : 'premium',
+      rent: estimateRentRange(branded),
+      bhk: BHK_LABEL,
+      status: 'ready',
+      dynamic: true,
+      branded: branded,
+      notes: (branded
+        ? 'Development by a major national builder (via Google Places). '
+        : 'Residential complex via Google Places. ')
+        + (p.formattedAddress ? p.formattedAddress + '. ' : '')
+        + 'Rent shown is the city-typical range (estimate) — verify on the listings page.'
+    };
+    soc._d = haversine(OFFICE.lat, OFFICE.lng, soc.lat, soc.lng);
+    if (soc._d > 16) return; // ignore far-flung text-search strays
+    if (branded) RATINGS[name] = { build: 8, reviews: 8 };
+    SOCIETIES.push(soc);
+    added++;
+  });
+  console.log(`[google-places] added ${added} societies from Google`);
+  return added;
 }
 
 // =============== RATINGS ===============
@@ -3400,6 +3530,8 @@ if (!IS_CURATED) {
         loadDynamicSocieties(),
         loadDynamicAqiStations()
       ]);
+      // Google Places supplement — dedupes against OSM results, so it must run after
+      const googleCount = await loadGooglePlacesSocieties();
       plotSocieties();
       plotAqiStations();
       refreshAllAQI();
@@ -3409,12 +3541,13 @@ if (!IS_CURATED) {
         map.fitBounds(coords, { padding: [60, 60] });
       }
       // Brief success flash before hiding
+      const total = SOCIETIES.length;
       const brandedCount = SOCIETIES.filter(s => s.branded).length;
-      if (loaderText) loaderText.textContent = socCount > 0
-        ? `${socCount} societies found${brandedCount ? ` · ${brandedCount} premium brands` : ''}`
+      if (loaderText) loaderText.textContent = total > 0
+        ? `${total} societies found${brandedCount ? ` · ${brandedCount} premium brands` : ''}`
         : 'No mapped societies here';
       setTimeout(() => { if (loader) loader.classList.remove('show'); }, 2200);
-      console.log(`[dynamic] ${CITY_NAME}: ${socCount || 0} complexes, ${aqiCount || 0} AQI stations`);
+      console.log(`[dynamic] ${CITY_NAME}: ${socCount || 0} OSM + ${googleCount || 0} Google, ${aqiCount || 0} AQI stations`);
     } catch (e) {
       console.warn('[dynamic] boot failed:', e.message);
       if (loader) loader.classList.remove('show');
@@ -3841,13 +3974,7 @@ if (SOCIETIES.length > 0) {
   // --- Step 1: office ---
   // Search tiers: Google Places (if GOOGLE_MAPS_API_KEY set) → Photon (good POI
   // matching, city-biased) → Nominatim. Plus: paste a Google Maps link / raw
-  // coordinates, or use device GPS.
-  // Google Places API (New) key. Requires, in Google Cloud Console (project 353498502811):
-  //   1. Billing enabled on the project
-  //   2. "Places API (New)" enabled: https://console.developers.google.com/apis/api/places.googleapis.com/overview?project=353498502811
-  //   3. Recommended: restrict the key to HTTP referrer https://nikhiljvibe.github.io/*
-  // Until then, searches silently fall back to Photon → Nominatim (no breakage).
-  const GOOGLE_MAPS_API_KEY = 'AIzaSyCTfkuawIPnthzWEn91PUXFvielrggeE34';
+  // coordinates, or use device GPS. (Key declared globally near PREFS.)
 
   function setOffice(name, address, lat, lng) {
     state.office = { name, address, lat, lng };
