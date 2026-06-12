@@ -3740,7 +3740,12 @@ if (SOCIETIES.length > 0) {
   // Search tiers: Google Places (if GOOGLE_MAPS_API_KEY set) → Photon (good POI
   // matching, city-biased) → Nominatim. Plus: paste a Google Maps link / raw
   // coordinates, or use device GPS.
-  const GOOGLE_MAPS_API_KEY = ''; // optional: paste a Google Places API (New) key for native Google search
+  // Google Places API (New) key. Requires, in Google Cloud Console (project 353498502811):
+  //   1. Billing enabled on the project
+  //   2. "Places API (New)" enabled: https://console.developers.google.com/apis/api/places.googleapis.com/overview?project=353498502811
+  //   3. Recommended: restrict the key to HTTP referrer https://nikhiljvibe.github.io/*
+  // Until then, searches silently fall back to Photon → Nominatim (no breakage).
+  const GOOGLE_MAPS_API_KEY = 'AIzaSyCTfkuawIPnthzWEn91PUXFvielrggeE34';
 
   function setOffice(name, address, lat, lng) {
     state.office = { name, address, lat, lng };
