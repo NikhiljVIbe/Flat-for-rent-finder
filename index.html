@@ -1149,6 +1149,41 @@
   }
   .reset-btn:hover { background: var(--brand-soft); color: var(--brand-deep); border-color: var(--brand); }
 
+  /* ============ Map loader ============ */
+  .map-loader {
+    position: absolute;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 900;
+    display: none;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 18px;
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    box-shadow: var(--shadow-lg);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .map-loader.show { display: inline-flex; }
+  .map-loader-spinner {
+    width: 15px;
+    height: 15px;
+    border: 2.5px solid var(--brand-soft);
+    border-top-color: var(--brand);
+    border-radius: 50%;
+    animation: mapSpin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes mapSpin { to { transform: rotate(360deg); } }
+  @media (max-width: 640px) {
+    .map-loader { top: 58px; font-size: 11.5px; padding: 8px 14px; }
+  }
+
   /* ============ Onboarding wizard ============ */
   .onboard-overlay {
     position: fixed;
@@ -1943,6 +1978,10 @@
         <div class="aqi-legend-row"><span class="aqi-legend-swatch" style="background:#7e1d1d"></span><span>Severe</span><span class="aqi-legend-range">400+</span></div>
       </div>
     </div>
+    <div class="map-loader" id="mapLoader">
+      <span class="map-loader-spinner"></span>
+      <span id="mapLoaderText">Loading societies…</span>
+    </div>
     <button class="reset-btn" id="resetBtn" title="Reset map view">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
       Reset view
@@ -2431,20 +2470,21 @@ async function overpassQuery(q) {
   return null;
 }
 
+// Major Indian developers — complexes matching these get priority placement,
+// the ultra band, and stronger default build/review ratings.
+const PREMIUM_BRANDS = /\b(prestige|sobha|brigade|puravankara|purva|lodha|godrej|dlf|salarpuria|sattva|mantri|shriram|provident|embassy|total environment|adarsh|century|bhartiya|assetz|vaishnavi|mahindra|tata|hiranandani|oberoi|raheja|runwal|kalpataru|piramal|rustomjee|kolte[- ]?patil|vtp|gera|paranjape|my home|aparna|casagrand|ats|jaypee|mahagun|supertech|eldeco|m3m|emaar|vatika|ireo|experion|signature global|birla|sunteck|wadhwa|ajmera|prateek|gaur)\b/i;
+
 async function loadDynamicSocieties() {
-  const radius = 8000; // 8 km around the office
+  const radius = 10000; // 10 km around the office
   const listEl = document.getElementById('list');
   if (listEl) listEl.innerHTML = '<div style="padding:20px 8px;font-size:12.5px;color:var(--ink-muted);text-align:center">Finding residential complexes near your office…<br><span style="font-size:11px">(OpenStreetMap data, usually 5–15 seconds)</span></div>';
 
-  const aptQuery = `[out:json][timeout:25];(way["building"="apartments"]["name"](around:${radius},${OFFICE.lat},${OFFICE.lng});relation["building"="apartments"]["name"](around:${radius},${OFFICE.lat},${OFFICE.lng}););out center 120;`;
-  let data = await overpassQuery(aptQuery);
-
-  // Fallback for thin-coverage cities: named residential areas/colonies
-  if (!data) {
-    console.log('[dynamic] apartment query empty — trying landuse=residential fallback');
-    const areaQuery = `[out:json][timeout:25];(way["landuse"="residential"]["name"](around:${radius},${OFFICE.lat},${OFFICE.lng});relation["landuse"="residential"]["name"](around:${radius},${OFFICE.lat},${OFFICE.lng}););out center 80;`;
-    data = await overpassQuery(areaQuery);
-  }
+  // One combined query: apartment buildings + named residential areas.
+  // Branded societies (Prestige/Sobha/Lodha/…) are frequently mapped as
+  // landuse=residential areas rather than building=apartments, so querying
+  // both is what surfaces the premium developments.
+  const combinedQuery = `[out:json][timeout:30];(way["building"="apartments"]["name"](around:${radius},${OFFICE.lat},${OFFICE.lng});relation["building"="apartments"]["name"](around:${radius},${OFFICE.lat},${OFFICE.lng});way["landuse"="residential"]["name"](around:${radius},${OFFICE.lat},${OFFICE.lng});relation["landuse"="residential"]["name"](around:${radius},${OFFICE.lat},${OFFICE.lng}););out center 300;`;
+  const data = await overpassQuery(combinedQuery);
 
   if (!data) {
     console.warn('[dynamic] all Overpass queries failed/empty');
@@ -2462,23 +2502,32 @@ async function loadDynamicSocieties() {
     if (!name || typeof c.lat !== 'number' || seen.has(name.toLowerCase())) return;
     if (genericName.test(name.trim())) return;
     seen.add(name.toLowerCase());
+    const branded = PREMIUM_BRANDS.test(name);
     found.push({
       name: name,
       sector: CITY_NAME,
       area: 'all',
       lat: c.lat, lng: c.lon,
-      band: 'premium',
+      band: branded ? 'ultra' : 'premium',
       rent: '—',
       bhk: BHK_LABEL,
       status: 'ready',
       dynamic: true,
-      notes: 'Residential complex from OpenStreetMap. Rent, photos and reviews via the listings page — data coverage varies by city.'
+      branded: branded,
+      notes: branded
+        ? 'Development by a major national builder (matched from OpenStreetMap). Typically premium construction and amenities — verify rent and availability via the listings page.'
+        : 'Residential complex from OpenStreetMap. Rent, photos and reviews via the listings page — data coverage varies by city.'
     });
+    // Reputable-developer prior for the rating index
+    if (branded) RATINGS[name] = { build: 8, reviews: 8 };
   });
-  // Closest 60 to keep the map readable
+
+  // Branded premium first (by distance), then the rest (by distance); cap 80.
   found.forEach(s => s._d = haversine(OFFICE.lat, OFFICE.lng, s.lat, s.lng));
-  found.sort((a, b) => a._d - b._d);
-  SOCIETIES.push(...found.slice(0, 60));
+  found.sort((a, b) => (b.branded - a.branded) || (a._d - b._d));
+  SOCIETIES.push(...found.slice(0, 80));
+  const brandedCount = SOCIETIES.filter(s => s.branded).length;
+  console.log(`[dynamic] ${SOCIETIES.length} societies (${brandedCount} branded premium)`);
   return SOCIETIES.length;
 }
 
@@ -3342,19 +3391,34 @@ setInterval(refreshAllAQI, AQI_POLL_MS);
 if (!IS_CURATED) {
   document.body.classList.add('dynamic-mode');
   (async () => {
-    const [socCount, aqiCount] = await Promise.all([
-      loadDynamicSocieties(),
-      loadDynamicAqiStations()
-    ]);
-    plotSocieties();
-    plotAqiStations();
-    refreshAllAQI();
-    if (typeof renderList === 'function') renderList();
-    if (SOCIETIES.length > 0) {
-      const coords = [[OFFICE.lat, OFFICE.lng], ...SOCIETIES.map(s => [s.lat, s.lng])];
-      map.fitBounds(coords, { padding: [60, 60] });
+    const loader = document.getElementById('mapLoader');
+    const loaderText = document.getElementById('mapLoaderText');
+    if (loader) loader.classList.add('show');
+    if (loaderText) loaderText.textContent = `Finding societies in ${CITY_NAME}…`;
+    try {
+      const [socCount, aqiCount] = await Promise.all([
+        loadDynamicSocieties(),
+        loadDynamicAqiStations()
+      ]);
+      plotSocieties();
+      plotAqiStations();
+      refreshAllAQI();
+      if (typeof renderList === 'function') renderList();
+      if (SOCIETIES.length > 0) {
+        const coords = [[OFFICE.lat, OFFICE.lng], ...SOCIETIES.map(s => [s.lat, s.lng])];
+        map.fitBounds(coords, { padding: [60, 60] });
+      }
+      // Brief success flash before hiding
+      const brandedCount = SOCIETIES.filter(s => s.branded).length;
+      if (loaderText) loaderText.textContent = socCount > 0
+        ? `${socCount} societies found${brandedCount ? ` · ${brandedCount} premium brands` : ''}`
+        : 'No mapped societies here';
+      setTimeout(() => { if (loader) loader.classList.remove('show'); }, 2200);
+      console.log(`[dynamic] ${CITY_NAME}: ${socCount || 0} complexes, ${aqiCount || 0} AQI stations`);
+    } catch (e) {
+      console.warn('[dynamic] boot failed:', e.message);
+      if (loader) loader.classList.remove('show');
     }
-    console.log(`[dynamic] ${CITY_NAME}: ${socCount || 0} complexes, ${aqiCount || 0} AQI stations`);
   })();
 }
 
